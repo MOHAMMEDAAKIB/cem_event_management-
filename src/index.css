@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables for our design system */
+:root {
+  /* Primary Colors - Green Theme */
+  --primary-green: #1E8449;
+  --primary-green-light: #27AE60;
+  --primary-green-dark: #186A3B;
+  
+  /* Secondary Colors - Yellow Theme */
+  --secondary-yellow: #F1C40F;
+  --secondary-yellow-light: #F4D03F;
+  --secondary-yellow-dark: #D4AC0D;
+}
+
+/* Tailwind Custom Classes */
+@layer utilities {
+  .text-primary {
+    color: var(--primary-green);
+  }
+  
+  .text-primary-light {
+    color: var(--primary-green-light);
+  }
+  
+  .text-secondary {
+    color: var(--secondary-yellow-dark);
+  }
+  
+  .bg-primary-green {
+    background-color: var(--primary-green);
+  }
+  
+  .bg-primary-green-light {
+    background-color: var(--primary-green-light);
+  }
+  
+  .bg-secondary-yellow {
+    background-color: var(--secondary-yellow);
+  }
+  
+  .border-primary-green {
+    border-color: var(--primary-green);
+  }
+  
+  /* Custom gradients */
+  .gradient-primary {
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+  }
+  
+  .gradient-secondary {
+    background: linear-gradient(135deg, var(--secondary-yellow) 0%, var(--secondary-yellow-light) 100%);
+  }
+}
+
+/* Smooth scrolling for the entire document */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-green);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-green-dark);
+}
+
+/* Selection colors */
+::selection {
+  background: var(--primary-green);
+  color: white;
+}
+
+::-moz-selection {
+  background: var(--primary-green);
+  color: white;
+}
+
+/* Focus styles for better accessibility */
+input:focus,
+textarea:focus,
+select:focus,
+button:focus {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+/* Loading animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Button ripple effect */
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-ripple:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Image lazy loading */
+.img-lazy {
+  transition: opacity 0.3s;
+}
+
+.img-lazy[data-loaded="false"] {
+  opacity: 0;
+}
+
+.img-lazy[data-loaded="true"] {
+  opacity: 1;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-break {
+    page-break-before: always;
+  }
+}
