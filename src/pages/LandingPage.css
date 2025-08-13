@@ -54,14 +54,17 @@
 .image-carousel {
   margin-top: 4rem;
   position: relative;
-  width: 400px;
-  height: 250px;
+  width: 420px;
+  height: 260px;
   margin-left: auto;
   margin-right: auto;
   overflow: hidden;
-  border-radius: 15px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(34, 197, 94, 0.18), 0 2px 8px rgba(0,0,0,0.08);
+  border: 2px solid #e5e7eb;
+  background: linear-gradient(135deg, #e0ffe7 0%, #fffbe6 100%);
 }
+
 
 .carousel-image {
   width: 100%;
@@ -71,32 +74,44 @@
   top: 0;
   left: 0;
   opacity: 0;
-  transition: opacity 1s ease-in-out;
+  filter: brightness(0.98) saturate(1.08) drop-shadow(0 2px 8px rgba(34,197,94,0.08));
+  transition: opacity 1s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1);
+  transform: scale(1.04);
 }
 
 .carousel-image.active {
   opacity: 1;
+  transform: scale(1);
 }
 
 .carousel-dots {
   display: flex;
   justify-content: center;
   margin-top: 1.5rem;
-  gap: 0.5rem;
+  gap: 0.7rem;
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
 }
 
 .dot {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, #bbf7d0 0%, #fef9c3 100%);
+  border: 2px solid #fff;
   cursor: pointer;
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(34,197,94,0.08);
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
 }
 
 .dot.active {
-  background: white;
-  transform: scale(1.2);
+  background: linear-gradient(135deg, #22c55e 0%, #fde047 100%);
+  border-color: #22c55e;
+  transform: scale(1.25);
+  box-shadow: 0 4px 16px rgba(34,197,94,0.18);
 }
 
 @media (max-width: 768px) {
@@ -116,5 +131,15 @@
   .image-carousel {
     width: 300px;
     height: 200px;
+  }
+  
+  .image-carousel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(34,197,94,0.08) 0%, rgba(253,224,71,0.08) 100%);
   }
 }

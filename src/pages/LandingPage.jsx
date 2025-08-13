@@ -52,11 +52,51 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
+      {/* Full Width Hero Image Section */}
+      <section className="relative w-full h-screen" style={{ height: '75vh' }}>
+        <div className="relative w-full h-full overflow-hidden">
+          {images.map((image, index) => (
+            <img
+              key={index}
+              src={image}
+              alt={`Event ${index + 1}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          ))}
+          
+          {/* Carousel Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          
+          {/* Carousel Dots */}
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                  index === currentImageIndex
+                    ? 'bg-white scale-125 shadow-lg'
+                    : 'bg-white/60 hover:bg-white/80'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Floating Badge */}
+          <div className="absolute top-8 right-8 bg-secondary-yellow text-gray-800 px-6 py-3 rounded-full font-semibold shadow-xl">
+            <Trophy className="w-5 h-5 inline mr-2" />
+            Award Winning
+          </div>
+        </div>
+      </section>
+
+      {/* Content Section Below Image */}
       <section className="section-padding bg-gradient-to-br from-gray-50 to-white">
         <div className="container">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Hero Content */}
+            {/* Hero Content - Left Side */}
             <div className="slide-up">
               <div className="flex items-center gap-2 mb-6">
                 <div className="badge badge-primary">
@@ -86,57 +126,19 @@ const LandingPage = () => {
                   View Gallery
                 </Link>
               </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {stats.map((stat, index) => (
-                  <div key={index} className="text-center">
-                    <div className="text-2xl font-bold text-primary-green mb-1">
-                      {stat.number}
-                    </div>
-                    <div className="text-sm text-muted">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            {/* Hero Image Carousel */}
-            <div className="relative scale-in">
-              <div className="relative w-full h-96 rounded-2xl overflow-hidden shadow-2xl">
-                {images.map((image, index) => (
-                  <img
-                    key={index}
-                    src={image}
-                    alt={`Event ${index + 1}`}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                      index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  />
+            {/* Stats - Right Side */}
+            <div className="slide-up">
+              <div className="grid grid-cols-2 gap-8">
+                {stats.map((stat, index) => (
+                  <div key={index} className="text-center p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                    <div className="text-3xl font-bold text-primary-green mb-2">
+                      {stat.number}
+                    </div>
+                    <div className="text-sm text-muted font-medium">{stat.label}</div>
+                  </div>
                 ))}
-                
-                {/* Carousel Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                
-                {/* Carousel Dots */}
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-                  {images.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => goToSlide(index)}
-                      className={`w-3 h-3 rounded-full transition-all ${
-                        index === currentImageIndex
-                          ? 'bg-white scale-110'
-                          : 'bg-white/60 hover:bg-white/80'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              
-              {/* Floating Badge */}
-              <div className="absolute -top-4 -right-4 bg-secondary-yellow text-gray-800 px-4 py-2 rounded-full font-semibold shadow-lg">
-                <Trophy className="w-4 h-4 inline mr-1" />
-                Award Winning
               </div>
             </div>
           </div>
