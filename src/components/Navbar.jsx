@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Calendar, Camera, User, Menu, X, Home } from 'lucide-react';
+import collegeLogo from '../pages/assats/images.jpg';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,7 +17,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-white shadow-lg sticky top-0 z-50">
+    <nav className="bg-white/10 backdrop-blur-md shadow-lg sticky top-0 z-50">
       <div className="container">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -24,10 +25,14 @@ export default function Navbar() {
             to="/" 
             className="flex items-center gap-3 text-2xl font-bold text-primary-green hover:opacity-80 transition-opacity"
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-green to-primary-green-light flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-white p-1 shadow-md">
+              <img 
+                src={collegeLogo} 
+                alt="College Logo" 
+                className="w-full h-full object-contain rounded-full"
+              />
             </div>
-            <span className="hidden sm:block">CEM</span>
+            <span className="hidden sm:block text-[#186A3B]">JCoE Event Hub</span>
           </Link>
 
           {/* Desktop Navigation */}

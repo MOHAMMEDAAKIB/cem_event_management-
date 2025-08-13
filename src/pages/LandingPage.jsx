@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight, Star, Users, Trophy, Camera } from 'lucide-react';
 
 // Import images
+import statsImage from './assats/Schedule-amico.png';
 import image1 from '../images/GA0189_01.jpg';
 import image2 from '../images/GA0192_01.jpg';
 import image3 from '../images/NEWY62.jpg';
@@ -83,19 +84,13 @@ const LandingPage = () => {
               />
             ))}
           </div>
-
-          {/* Floating Badge */}
-          <div className="absolute top-8 right-8 bg-secondary-yellow text-gray-800 px-6 py-3 rounded-full font-semibold shadow-xl">
-            <Trophy className="w-5 h-5 inline mr-2" />
-            Award Winning
-          </div>
         </div>
       </section>
 
       {/* Content Section Below Image */}
       <section className="section-padding bg-gradient-to-br from-gray-50 to-white">
         <div className="container">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid pt-20 lg:grid-cols-2 gap-10 items-center">
             {/* Hero Content - Left Side */}
             <div className="slide-up">
               <div className="flex items-center gap-2 mb-6">
@@ -106,8 +101,8 @@ const LandingPage = () => {
               </div>
               
               <h1 className="heading-1 text-primary">
-                College Event
-                <span className="block text-secondary-yellow-dark">Management System</span>
+                Jaffna College of Education
+                <span className="block text-secondary-yellow-dark">Event Highlights</span>
               </h1>
               
               <p className="text-lg text-muted mb-8 leading-relaxed">
@@ -116,7 +111,7 @@ const LandingPage = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Link to="/calendar" className="btn btn-primary btn-lg">
+                <Link to="/calendar" className="btn pl-4 btn-primary btn-lg">
                   <Calendar className="w-5 h-5 mr-2" />
                   Explore Events
                   <ArrowRight className="w-5 h-5 ml-2" />
@@ -129,18 +124,20 @@ const LandingPage = () => {
             </div>
 
             {/* Stats - Right Side */}
-            <div className="slide-up">
-              <div className="grid grid-cols-2 gap-8">
-                {stats.map((stat, index) => (
-                  <div key={index} className="text-center p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-                    <div className="text-3xl font-bold text-primary-green mb-2">
-                      {stat.number}
-                    </div>
-                    <div className="text-sm text-muted font-medium">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
+            <div className="slide-up p-10">
+              <img src={statsImage} alt="Statistics" className="w-full h-auto" />
             </div>
+          </div>
+
+          <div className="grid grid-cols-4 gap-4 mt-12">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                <div className="text-3xl font-bold text-primary-green mb-2">
+                  {stat.number}
+                </div>
+                <div className="text-sm text-muted font-medium">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -186,10 +183,7 @@ const LandingPage = () => {
               exceptional event experiences.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/calendar" className="btn bg-white text-primary-green hover:bg-gray-100 btn-lg">
-                <Calendar className="w-5 h-5 mr-2" />
-                Get Started Today
-              </Link>
+              
               <Link to="/admin/login" className="btn btn-outline border-white text-white hover:bg-white hover:text-primary-green btn-lg">
                 Admin Access
               </Link>

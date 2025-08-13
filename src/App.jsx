@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import LandingPage from './pages/LandingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
         } />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <Footer />
     </Router>
   );
 }
