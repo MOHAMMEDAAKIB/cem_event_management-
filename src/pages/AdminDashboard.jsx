@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
   Edit, 
@@ -10,28 +11,115 @@ import {
   TrendingUp,
   LogOut,
   Settings,
-  BarChart3
+  BarChart3,
+  Eye,
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react';
-import EventForm from '../components/EventForm';
-import { events as dummyEvents } from '../utils/dummyData';
+import AdminEventForm from '../components/AdminEventForm';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { 
+  getAllEvents, 
+  deleteEvent, 
+  createEvent, 
+  updateEvent,
+  getUpcomingEvents,
+  getPastEvents
+} from '../firebase/eventService';
 import { logout } from '../utils/auth';
 
 export default function AdminDashboard() {
   const [events, setEvents] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [pastEvents, setPastEvents] = useState([]);
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Using dummy data instead of API calls
-    setEvents(dummyEvents);
+    loadAllData();
   }, []);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return;
-    
-    // Remove from state (in real app, this would be an API call)
-    setEvents(prev => prev.filter(event => event._id !== id));
+  const loadAllData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [allEvents, upcoming, past] = await Promise.all([
+        getAllEvents(),
+        getUpcomingEvents(),
+        getPastEvents()
+      ]);
+      
+      setEvents(allEvents);
+      setUpcomingEvents(upcoming);
+      setPastEvents(past);
+    } catch (err) {
+      console.error('Error loading data:', err);
+      setError('Failed to load events. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateEvent = async (eventData, imageFile) => {
+    try {
+      setSubmitting(true);
+      const newEvent = await createEvent(eventData, imageFile);
+      setEvents(prev => [newEvent, ...prev]);
+      
+      // Update other lists if needed
+      const today = new Date().toISOString().split('T')[0];
+      if (newEvent.date >= today) {
+        setUpcomingEvents(prev => [...prev, newEvent].sort((a, b) => new Date(a.date) - new Date(b.date)));
+      } else {
+        setPastEvents(prev => [newEvent, ...prev]);
+      }
+      
+      setShowForm(false);
+      setEditing(null);
+    } catch (err) {
+      console.error('Error creating event:', err);
+      setError('Failed to create event. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUpdateEvent = async (eventData, imageFile) => {
+    try {
+      setSubmitting(true);
+      const updatedEvent = await updateEvent(editing.id, eventData, imageFile);
+      
+      setEvents(prev => prev.map(e => e.id === editing.id ? updatedEvent : e));
+      setUpcomingEvents(prev => prev.map(e => e.id === editing.id ? updatedEvent : e));
+      setPastEvents(prev => prev.map(e => e.id === editing.id ? updatedEvent : e));
+      
+      setShowForm(false);
+      setEditing(null);
+    } catch (err) {
+      console.error('Error updating event:', err);
+      setError('Failed to update event. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    try {
+      await deleteEvent(eventId);
+      setEvents(prev => prev.filter(e => e.id !== eventId));
+      setUpcomingEvents(prev => prev.filter(e => e.id !== eventId));
+      setPastEvents(prev => prev.filter(e => e.id !== eventId));
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error('Error deleting event:', err);
+      setError('Failed to delete event. Please try again.');
+    }
   };
 
   const handleLogout = () => {
@@ -44,167 +132,281 @@ export default function AdminDashboard() {
       title: 'Total Events',
       value: events.length,
       icon: Calendar,
-      color: 'from-primary-green to-primary-green-light',
-      change: '+12%'
+      color: 'from-college-primary to-college-primary/80',
+      change: '+12%',
+      description: 'All events'
     },
     {
-      title: 'Active Events',
-      value: events.filter(e => new Date(e.date) > new Date()).length,
+      title: 'Upcoming Events',
+      value: upcomingEvents.length,
       icon: TrendingUp,
-      color: 'from-secondary-yellow to-secondary-yellow-light',
-      change: '+8%'
+      color: 'from-college-secondary to-orange-400',
+      change: '+8%',
+      description: 'Future events'
     },
     {
-      title: 'Total Participants',
-      value: '2.4K',
-      icon: Users,
+      title: 'Past Events',
+      value: pastEvents.length,
+      icon: Trophy,
       color: 'from-blue-500 to-blue-600',
-      change: '+23%'
+      change: '+23%',
+      description: 'Completed events'
     },
     {
       title: 'Success Rate',
       value: '98%',
-      icon: Trophy,
-      color: 'from-purple-500 to-purple-600',
-      change: '+2%'
+      icon: BarChart3,
+      color: 'from-green-500 to-green-600',
+      change: '+2%',
+      description: 'Event completion'
     }
   ];
 
-  const recentEvents = events.slice(0, 3);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-college-accent/20 via-white to-college-accent/10 flex items-center justify-center">
+        <LoadingSpinner size="large" text="Loading dashboard..." />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-college-accent/20 via-white to-college-accent/10">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200"
+      >
         <div className="container">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-green to-primary-green-light rounded-lg flex items-center justify-center">
-                <Settings className="w-5 h-5 text-white" />
-              </div>
+          <div className="flex items-center justify-between h-20">
+            <div className="flex items-center gap-4">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="w-12 h-12 bg-gradient-to-br from-college-primary to-college-primary/80 rounded-2xl flex items-center justify-center shadow-lg"
+              >
+                <Settings className="w-6 h-6 text-white" />
+              </motion.div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-                <p className="text-sm text-gray-600">Manage your events and content</p>
+                <h1 className="text-2xl font-bold text-gray-900 font-serif">Admin Dashboard</h1>
+                <p className="text-gray-600">Manage your events and content</p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="btn btn-outline btn-sm"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={loadAllData}
+                className="p-2 text-gray-600 hover:text-college-primary transition-colors rounded-lg hover:bg-gray-100"
+                title="Refresh data"
+              >
+                <RefreshCw className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <div className="container section-padding">
-        {/* Stats Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <div key={index} className="card hover:transform hover:scale-105 transition-all">
-              <div className="card-body">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}>
-                    <stat.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-green-600">{stat.change}</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-600">{stat.title}</div>
+        {/* Error Alert */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3"
+            >
+              <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-red-800 font-medium">{error}</p>
               </div>
-            </div>
-          ))}
-        </div>
+              <button
+                onClick={() => setError(null)}
+                className="text-red-500 hover:text-red-700"
+              >
+                ×
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Actions and Recent Events */}
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Quick Actions */}
-          <div className="lg:col-span-1">
-            <div className="card">
-              <div className="card-header">
-                <h2 className="heading-3 mb-0">Quick Actions</h2>
+        {/* Stats Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        >
+          {stats.map((stat, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + index * 0.1 }}
+              whileHover={{ y: -4 }}
+              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
+                  <stat.icon className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                  {stat.change}
+                </span>
               </div>
-              <div className="card-body space-y-4">
-                <button
+              <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
+              <div className="text-sm text-gray-600 font-medium">{stat.title}</div>
+              <div className="text-xs text-gray-500">{stat.description}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="lg:col-span-1"
+          >
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900 font-serif">Quick Actions</h2>
+              </div>
+              <div className="p-6 space-y-4">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => { setEditing(null); setShowForm(true); }}
-                  className="btn btn-primary w-full"
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-college-primary text-white rounded-xl hover:bg-college-primary/90 transition-colors font-medium shadow-lg"
                 >
-                  <Plus className="w-5 h-5 mr-2" />
+                  <Plus className="w-5 h-5" />
                   Add New Event
-                </button>
-                <button className="btn btn-outline w-full">
-                  <BarChart3 className="w-5 h-5 mr-2" />
+                </motion.button>
+                <button className="w-full flex items-center gap-3 px-4 py-3 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium">
+                  <BarChart3 className="w-5 h-5" />
                   View Analytics
                 </button>
-                <button className="btn btn-secondary w-full">
-                  <Users className="w-5 h-5 mr-2" />
+                <button className="w-full flex items-center gap-3 px-4 py-3 bg-college-secondary text-gray-800 rounded-xl hover:bg-college-secondary/90 transition-colors font-medium">
+                  <Users className="w-5 h-5" />
                   Manage Users
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Recent Events */}
-          <div className="lg:col-span-2">
-            <div className="card">
-              <div className="card-header">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="lg:col-span-3"
+          >
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100">
+              <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h2 className="heading-3 mb-0">Recent Events</h2>
-                  <button className="btn btn-outline btn-sm">View All</button>
+                  <h2 className="text-xl font-bold text-gray-900 font-serif">Recent Events</h2>
+                  <button 
+                    onClick={() => navigate('/gallery')}
+                    className="flex items-center gap-2 px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium"
+                  >
+                    <Eye className="w-4 h-4" />
+                    View All
+                  </button>
                 </div>
               </div>
-              <div className="card-body p-0">
-                <div className="space-y-1">
-                  {recentEvents.map((event, index) => (
-                    <div key={event._id} className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-                          <Calendar className="w-6 h-6 text-gray-600" />
+              <div className="p-0">
+                {events.slice(0, 5).length === 0 ? (
+                  <div className="text-center py-12">
+                    <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500 font-medium">No events yet</p>
+                    <p className="text-gray-400 text-sm">Create your first event to get started</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {events.slice(0, 5).map((event, index) => (
+                      <motion.div
+                        key={event.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 + index * 0.1 }}
+                        className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-college-primary/10 to-college-primary/20 rounded-xl flex items-center justify-center">
+                            <Calendar className="w-6 h-6 text-college-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900 mb-1">{event.title}</h3>
+                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                              <span>{new Date(event.date).toLocaleDateString()}</span>
+                              {event.location && <span>• {event.location}</span>}
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                event.category === 'Cultural' ? 'bg-purple-100 text-purple-800' :
+                                event.category === 'Sports' ? 'bg-blue-100 text-blue-800' :
+                                event.category === 'Workshop' ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {event.category}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{event.title}</h3>
-                          <p className="text-sm text-gray-600">
-                            {new Date(event.date).toLocaleDateString()} • {event.location}
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => { setEditing(event); setShowForm(true); }}
+                            className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                            title="Edit event"
+                          >
+                            <Edit className="w-4 h-4 text-blue-600" />
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setDeleteConfirm(event)}
+                            className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                            title="Delete event"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </motion.button>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => { setEditing(event); setShowForm(true); }}
-                          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                          title="Edit event"
-                        >
-                          <Edit className="w-4 h-4 text-gray-600" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(event._id)}
-                          className="p-2 hover:bg-red-100 rounded-lg transition-colors"
-                          title="Delete event"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        {/* All Events Table */}
-        <div className="card mt-8">
-          <div className="card-header">
-            <div className="flex items-center justify-between">
-              <h2 className="heading-3 mb-0">All Events</h2>
-              <div className="text-sm text-gray-600">{events.length} total events</div>
+        {/* All Events Table - Only show if there are events */}
+        {events.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 mt-8"
+          >
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900 font-serif">All Events</h2>
+                <div className="text-sm text-gray-600 font-medium">{events.length} total events</div>
+              </div>
             </div>
-          </div>
-          <div className="card-body p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50/80 border-b border-gray-200">
                   <tr>
                     <th className="text-left p-4 font-semibold text-gray-700">Event</th>
                     <th className="text-left p-4 font-semibold text-gray-700">Date</th>
@@ -215,74 +417,145 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {events.map((event, index) => (
-                    <tr key={event._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <motion.tr
+                      key={event.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
+                    >
                       <td className="p-4">
-                        <div className="font-medium text-gray-900">{event.title}</div>
-                        <div className="text-sm text-gray-600 truncate max-w-xs">{event.description}</div>
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={event.imageUrl || 'https://via.placeholder.com/64x64?text=No+Image'}
+                            alt={event.title}
+                            className="w-12 h-12 object-cover rounded-lg"
+                          />
+                          <div>
+                            <div className="font-semibold text-gray-900">{event.title}</div>
+                            <div className="text-sm text-gray-600 truncate max-w-xs">
+                              {event.shortDescription || event.description}
+                            </div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="p-4 text-gray-700">
-                        {new Date(event.date).toLocaleDateString()}
+                      <td className="p-4 text-gray-700 font-medium">
+                        {new Date(event.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
                       </td>
-                      <td className="p-4 text-gray-700">{event.location}</td>
+                      <td className="p-4 text-gray-700">{event.location || '-'}</td>
                       <td className="p-4">
-                        <span className={`badge ${
-                          event.category === 'Sports' ? 'badge-primary' :
-                          event.category === 'Cultural' ? 'badge-secondary' :
-                          'badge-success'
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          event.category === 'Cultural' ? 'bg-purple-100 text-purple-800' :
+                          event.category === 'Sports' ? 'bg-blue-100 text-blue-800' :
+                          event.category === 'Workshop' ? 'bg-green-100 text-green-800' :
+                          event.category === 'Seminar' ? 'bg-orange-100 text-orange-800' :
+                          'bg-gray-100 text-gray-800'
                         }`}>
                           {event.category}
                         </span>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center justify-center gap-2">
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={() => { setEditing(event); setShowForm(true); }}
-                            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                            className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
                             title="Edit event"
                           >
-                            <Edit className="w-4 h-4 text-gray-600" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(event._id)}
+                            <Edit className="w-4 h-4 text-blue-600" />
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setDeleteConfirm(event)}
                             className="p-2 hover:bg-red-100 rounded-lg transition-colors"
                             title="Delete event"
                           >
                             <Trash2 className="w-4 h-4 text-red-600" />
-                          </button>
+                          </motion.button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        )}
       </div>
 
       {/* Event Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <EventForm
-              event={editing}
-              onClose={() => { 
-                setShowForm(false); 
-                setEditing(null); 
-              }}
-              onSave={(savedEvent) => {
-                if (editing) {
-                  setEvents(prev => prev.map(e => e._id === editing._id ? savedEvent : e));
-                } else {
-                  setEvents(prev => [...prev, { ...savedEvent, _id: Date.now().toString() }]);
-                }
-                setShowForm(false);
-                setEditing(null);
-              }}
-            />
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          >
+            <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+              <AdminEventForm
+                initialData={editing}
+                onSubmit={editing ? handleUpdateEvent : handleCreateEvent}
+                onCancel={() => { 
+                  setShowForm(false); 
+                  setEditing(null); 
+                }}
+                isLoading={submitting}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+            >
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 className="w-8 h-8 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Event</h3>
+                <p className="text-gray-600">
+                  Are you sure you want to delete "<strong>{deleteConfirm.title}</strong>"? 
+                  This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteEvent(deleteConfirm.id)}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

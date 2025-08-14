@@ -22,24 +22,33 @@ export default function SearchBar({ onSearch, className = '', placeholder = "Sea
   };
 
   return (
-    <form onSubmit={handleSubmit} className={`relative ${className}`}>
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+    <form onSubmit={handleSubmit} className={`${className}`}>
+      <div className="flex items-center gap-3 p-2 border border-gray-300 rounded-lg bg-white shadow-sm">
+        {/* Search Icon Section */}
+        <div className="flex-shrink-0">
+          <Search className="text-gray-400 w-5 h-5" />
+        </div>
+        
+        {/* Input Text Section */}
         <input
           type="text"
           value={query}
           onChange={handleChange}
           placeholder={placeholder}
-          className="form-input pl-12 pr-12 h-12 text-base"
+          className="flex-1 outline-none text-base bg-transparent"
         />
+        
+        {/* Clear Icon Section */}
         {query && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleClear}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         )}
       </div>
     </form>
