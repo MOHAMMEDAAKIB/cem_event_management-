@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight, Star, Users, Trophy, Camera } from 'lucide-react';
 
 // Import images
-import statsImage from './assats/Schedule-amico.png';
+import statsImage from './assets/Schedule-amico.png';
 import image1 from '../images/GA0189_01.jpg';
 import image2 from '../images/GA0192_01.jpg';
 import image3 from '../images/NEWY62.jpg';

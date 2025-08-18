@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Calendar, Camera, User, Menu, X, Home } from 'lucide-react';
-import collegeLogo from '../pages/assats/images.jpg';
+import collegeLogo from '../pages/assets/icon.jpg';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
