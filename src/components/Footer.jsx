@@ -14,9 +14,9 @@ export default function Footer() {
   ];
 
   const contactInfo = [
-    { icon: Phone, text: '+91 (xxx) xxx-xxxx' },
-    { icon: Mail, text: 'info@jcoe.edu.in' },
-    { icon: MapPin, text: 'Jaffna National College of Education, Jaffna' },
+    { icon: Phone, text: '021 223 0036' },
+    { icon: Mail, text: 'info@jcoe.edu.lk' },
+    { icon: MapPin, text: 'Jaffna College of Education,Kopay, Jaffna' },
   ];
 
   const socialLinks = [

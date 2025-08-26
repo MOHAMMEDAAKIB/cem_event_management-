@@ -48,7 +48,7 @@ const EventModal = ({ event, isOpen, onClose }) => {
             {/* Header */}
             <div className="relative">
               <img
-                src={event.imageUrl || 'https://via.placeholder.com/800x400?text=No+Image'}
+                src={event.images?.[0]?.url || event.imageUrl || 'https://via.placeholder.com/800x400?text=No+Image'}
                 alt={event.title}
                 className="w-full h-64 object-cover"
               />
@@ -120,7 +120,12 @@ const EventModal = ({ event, isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Location</p>
-                      <p className="font-semibold text-gray-900">{event.location}</p>
+                      <p className="font-semibold text-gray-900">
+                        {typeof event.location === 'string' 
+                          ? event.location 
+                          : `${event.location.address || ''}, ${event.location.city || ''}, ${event.location.state || ''} ${event.location.zipCode || ''}`.replace(/,\s*,/g, ',').replace(/^,\s*/, '').replace(/,\s*$/, '').trim()
+                        }
+                      </p>
                     </div>
                   </div>
                 )}

@@ -15,7 +15,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getEventById } from '../firebase/eventService';
+import { getEventById } from '../services/eventServiceClient';
 
 export default function EventDetailsPage() {
   const { id } = useParams();
@@ -33,8 +33,8 @@ export default function EventDetailsPage() {
     try {
       setLoading(true);
       setError(null);
-      const eventData = await getEventById(id);
-      setEvent(eventData);
+      const response = await getEventById(id);
+      setEvent(response.data);
     } catch (err) {
       console.error('Error loading event:', err);
       setError('Event not found or failed to load.');
@@ -44,16 +44,18 @@ export default function EventDetailsPage() {
   };
 
   const nextImage = () => {
-    if (event?.imageUrl) {
-      // If only one image, do nothing
-      return;
+    if (event?.images && event.images.length > 1) {
+      setCurrentImageIndex((prev) => 
+        prev === event.images.length - 1 ? 0 : prev + 1
+      );
     }
   };
 
   const prevImage = () => {
-    if (event?.imageUrl) {
-      // If only one image, do nothing
-      return;
+    if (event?.images && event.images.length > 1) {
+      setCurrentImageIndex((prev) => 
+        prev === 0 ? event.images.length - 1 : prev - 1
+      );
     }
   };
 
@@ -220,7 +222,12 @@ export default function EventDetailsPage() {
                       </div>
                       <div>
                         <p className="text-sm text-gray-600 font-medium">Location</p>
-                        <p className="text-gray-900 font-semibold">{event.location}</p>
+                        <p className="text-gray-900 font-semibold">
+                          {typeof event.location === 'string' 
+                            ? event.location 
+                            : `${event.location.address || ''}, ${event.location.city || ''}, ${event.location.state || ''} ${event.location.zipCode || ''}`.replace(/,\s*,/g, ',').replace(/^,\s*/, '').replace(/,\s*$/, '').trim()
+                          }
+                        </p>
                       </div>
                     </div>
                   )}
@@ -243,8 +250,8 @@ export default function EventDetailsPage() {
               </motion.div>
             )}
 
-            {/* Main Image */}
-            {event.imageUrl && (
+            {/* Main Image/Gallery */}
+            {event.images && event.images.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -253,11 +260,42 @@ export default function EventDetailsPage() {
               >
                 <div className="relative">
                   <img
-                    src={event.imageUrl}
+                    src={event.images[currentImageIndex]?.url || event.images[0]?.url}
                     alt={event.title}
                     className="w-full h-96 object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                  
+                  {/* Navigation arrows for multiple images */}
+                  {event.images.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevImage}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-300"
+                      >
+                        <ChevronLeft className="w-6 h-6" />
+                      </button>
+                      <button
+                        onClick={nextImage}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-300"
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
+                      
+                      {/* Image indicators */}
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                        {event.images.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentImageIndex(index)}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                              index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               </motion.div>
             )}

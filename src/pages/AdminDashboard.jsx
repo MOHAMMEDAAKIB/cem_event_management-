@@ -25,7 +25,7 @@ import {
   updateEvent,
   getUpcomingEvents,
   getPastEvents
-} from '../firebase/eventService';
+} from '../services/eventServiceClient';
 import { logout } from '../utils/auth';
 
 export default function AdminDashboard() {
@@ -49,18 +49,29 @@ export default function AdminDashboard() {
       setLoading(true);
       setError(null);
       
+      console.log('Loading events data...');
+      
       const [allEvents, upcoming, past] = await Promise.all([
         getAllEvents(),
         getUpcomingEvents(),
         getPastEvents()
       ]);
       
-      setEvents(allEvents);
-      setUpcomingEvents(upcoming);
-      setPastEvents(past);
+      console.log('All events loaded:', allEvents);
+      console.log('Upcoming events loaded:', upcoming);
+      console.log('Past events loaded:', past);
+      
+      // Ensure we have arrays
+      setEvents(Array.isArray(allEvents) ? allEvents : []);
+      setUpcomingEvents(Array.isArray(upcoming) ? upcoming : []);
+      setPastEvents(Array.isArray(past) ? past : []);
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load events. Please try again.');
+      // Set empty arrays on error
+      setEvents([]);
+      setUpcomingEvents([]);
+      setPastEvents([]);
     } finally {
       setLoading(false);
     }
@@ -69,7 +80,9 @@ export default function AdminDashboard() {
   const handleCreateEvent = async (eventData, imageFile) => {
     try {
       setSubmitting(true);
-      const newEvent = await createEvent(eventData, imageFile);
+      // Convert single image file to array for the API
+      const imageFiles = imageFile ? [imageFile] : [];
+      const newEvent = await createEvent(eventData, imageFiles);
       setEvents(prev => [newEvent, ...prev]);
       
       // Update other lists if needed
@@ -93,7 +106,9 @@ export default function AdminDashboard() {
   const handleUpdateEvent = async (eventData, imageFile) => {
     try {
       setSubmitting(true);
-      const updatedEvent = await updateEvent(editing.id, eventData, imageFile);
+      // Convert single image file to array for the API
+      const imageFiles = imageFile ? [imageFile] : [];
+      const updatedEvent = await updateEvent(editing.id, eventData, imageFiles);
       
       setEvents(prev => prev.map(e => e.id === editing.id ? updatedEvent : e));
       setUpcomingEvents(prev => prev.map(e => e.id === editing.id ? updatedEvent : e));
@@ -130,7 +145,7 @@ export default function AdminDashboard() {
   const stats = [
     {
       title: 'Total Events',
-      value: events.length,
+      value: Array.isArray(events) ? events.length : 0,
       icon: Calendar,
       color: 'from-college-primary to-college-primary/80',
       change: '+12%',
@@ -138,7 +153,7 @@ export default function AdminDashboard() {
     },
     {
       title: 'Upcoming Events',
-      value: upcomingEvents.length,
+      value: Array.isArray(upcomingEvents) ? upcomingEvents.length : 0,
       icon: TrendingUp,
       color: 'from-college-secondary to-orange-400',
       change: '+8%',
@@ -146,7 +161,7 @@ export default function AdminDashboard() {
     },
     {
       title: 'Past Events',
-      value: pastEvents.length,
+      value: Array.isArray(pastEvents) ? pastEvents.length : 0,
       icon: Trophy,
       color: 'from-blue-500 to-blue-600',
       change: '+23%',
@@ -325,7 +340,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="p-0">
-                {events.slice(0, 5).length === 0 ? (
+                {!Array.isArray(events) || events.length === 0 ? (
                   <div className="text-center py-12">
                     <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500 font-medium">No events yet</p>
@@ -349,7 +364,7 @@ export default function AdminDashboard() {
                             <h3 className="font-semibold text-gray-900 mb-1">{event.title}</h3>
                             <div className="flex items-center gap-4 text-sm text-gray-600">
                               <span>{new Date(event.date).toLocaleDateString()}</span>
-                              {event.location && <span>• {event.location}</span>}
+                              {event.location && event.location.address && <span>• {event.location.address}, {event.location.city}</span>}
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 event.category === 'Cultural' ? 'bg-purple-100 text-purple-800' :
                                 event.category === 'Sports' ? 'bg-blue-100 text-blue-800' :
@@ -391,7 +406,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* All Events Table - Only show if there are events */}
-        {events.length > 0 && (
+        {Array.isArray(events) && events.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -427,7 +442,9 @@ export default function AdminDashboard() {
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <img
-                            src={event.imageUrl || 'https://via.placeholder.com/64x64?text=No+Image'}
+                            src={event.images && event.images.length > 0 
+                              ? event.images[0].url 
+                              : 'https://via.placeholder.com/64x64?text=No+Image'}
                             alt={event.title}
                             className="w-12 h-12 object-cover rounded-lg"
                           />
@@ -446,7 +463,11 @@ export default function AdminDashboard() {
                           day: 'numeric'
                         })}
                       </td>
-                      <td className="p-4 text-gray-700">{event.location || '-'}</td>
+                      <td className="p-4 text-gray-700">
+                        {event.location && event.location.address 
+                          ? `${event.location.address}, ${event.location.city}` 
+                          : '-'}
+                      </td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                           event.category === 'Cultural' ? 'bg-purple-100 text-purple-800' :

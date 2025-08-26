@@ -1,0 +1,244 @@
+import api from '../utils/api.js';
+
+/**
+ * Upload image files to server
+ * @param {File[]} files - Image files to upload
+ * @returns {Promise<Array>} - Upload results
+ */
+const uploadImages = async (files) => {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append('images', file);
+  });
+
+  const response = await api.post('/upload/images', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data.images;
+};
+
+/**
+ * Create a new event
+ * @param {Object} eventData - Event data
+ * @param {File[]} imageFiles - Image files
+ * @returns {Promise<Object>} - Created event
+ */
+export const createEvent = async (eventData, imageFiles = []) => {
+  try {
+    let images = [];
+
+    // Upload images first if provided
+    if (imageFiles && imageFiles.length > 0) {
+      try {
+        images = await uploadImages(imageFiles);
+      } catch (uploadError) {
+        console.warn('Image upload failed, proceeding without images:', uploadError);
+        // Continue with event creation even if image upload fails
+        images = [];
+      }
+    }
+
+    const response = await api.post('/events', {
+      ...eventData,
+      images,
+    });
+
+    return response.data.success ? response.data.data : response.data;
+  } catch (error) {
+    console.error('Error creating event:', error);
+    throw new Error(error.response?.data?.message || 'Failed to create event');
+  }
+};
+
+/**
+ * Get all events with optional filters
+ * @param {Object} params - Query parameters
+ * @returns {Promise<Array>} - Events array
+ */
+export const getAllEvents = async (params = {}) => {
+  try {
+    const response = await api.get('/events', { params });
+    // Return the events array from the nested structure
+    return response.data.success ? response.data.data.events : [];
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    throw new Error('Failed to fetch events');
+  }
+};
+
+/**
+ * Get upcoming events
+ * @param {Object} params - Query parameters
+ * @returns {Promise<Array>} - Upcoming events
+ */
+export const getUpcomingEvents = async (params = {}) => {
+  try {
+    const response = await api.get('/events/upcoming', { params });
+    // Return the events array directly
+    return response.data.success ? response.data.data : [];
+  } catch (error) {
+    console.error('Error fetching upcoming events:', error);
+    throw new Error('Failed to fetch upcoming events');
+  }
+};
+
+/**
+ * Get past events
+ * @param {Object} params - Query parameters
+ * @returns {Promise<Array>} - Past events
+ */
+export const getPastEvents = async (params = {}) => {
+  try {
+    const response = await api.get('/events/past', { params });
+    // Return the events array directly
+    return response.data.success ? response.data.data : [];
+  } catch (error) {
+    console.error('Error fetching past events:', error);
+    throw new Error('Failed to fetch past events');
+  }
+};
+
+/**
+ * Get featured events
+ * @param {number} limit - Number of events to return
+ * @returns {Promise<Array>} - Featured events
+ */
+export const getFeaturedEvents = async (limit = 5) => {
+  try {
+    const response = await api.get('/events/featured', {
+      params: { limit }
+    });
+    return response.data.success ? response.data.data : [];
+  } catch (error) {
+    console.error('Error fetching featured events:', error);
+    throw new Error('Failed to fetch featured events');
+  }
+};
+
+/**
+ * Get a single event by ID
+ * @param {string} eventId - Event ID
+ * @returns {Promise<Object>} - Event data
+ */
+export const getEventById = async (eventId) => {
+  try {
+    const response = await api.get(`/events/${eventId}`);
+    return response.data.success ? response.data.data : null;
+  } catch (error) {
+    console.error('Error fetching event:', error);
+    throw new Error('Failed to fetch event');
+  }
+};
+
+/**
+ * Update an event
+ * @param {string} eventId - Event ID
+ * @param {Object} eventData - Updated event data
+ * @param {File[]} newImageFiles - New image files to add
+ * @param {string[]} imagesToDelete - Public IDs of images to delete
+ * @returns {Promise<Object>} - Updated event
+ */
+export const updateEvent = async (eventId, eventData, newImageFiles = [], imagesToDelete = []) => {
+  try {
+    let newImages = [];
+
+    // Upload new images if provided
+    if (newImageFiles && newImageFiles.length > 0) {
+      newImages = await uploadImages(newImageFiles);
+    }
+
+    const response = await api.put(`/events/${eventId}`, {
+      ...eventData,
+      newImages,
+      imagesToDelete,
+    });
+
+    return response.data.success ? response.data.data : response.data;
+  } catch (error) {
+    console.error('Error updating event:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update event');
+  }
+};
+
+/**
+ * Delete an event
+ * @param {string} eventId - Event ID
+ * @returns {Promise<boolean>} - Success status
+ */
+export const deleteEvent = async (eventId) => {
+  try {
+    const response = await api.delete(`/events/${eventId}`);
+    return response.data.success || true;
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    throw new Error('Failed to delete event');
+  }
+};
+
+/**
+ * Get events by category
+ * @param {string} category - Event category
+ * @param {Object} params - Additional query parameters
+ * @returns {Promise<Array>} - Events in category
+ */
+export const getEventsByCategory = async (category, params = {}) => {
+  try {
+    const response = await api.get('/events', {
+      params: { ...params, category }
+    });
+    return response.data.success ? response.data.data.events : [];
+  } catch (error) {
+    console.error('Error fetching events by category:', error);
+    throw new Error('Failed to fetch events by category');
+  }
+};
+
+/**
+ * Search events
+ * @param {string} searchTerm - Search term
+ * @param {Object} params - Additional parameters
+ * @returns {Promise<Array>} - Search results
+ */
+export const searchEvents = async (searchTerm, params = {}) => {
+  try {
+    const response = await api.get('/events', {
+      params: { ...params, search: searchTerm }
+    });
+    return response.data.success ? response.data.data.events : [];
+  } catch (error) {
+    console.error('Error searching events:', error);
+    throw new Error('Failed to search events');
+  }
+};
+
+/**
+ * Get event statistics
+ * @returns {Promise<Object>} - Event statistics
+ */
+export const getEventStatistics = async () => {
+  try {
+    const response = await api.get('/events/statistics');
+    return response.data.success ? response.data.data : {};
+  } catch (error) {
+    console.error('Error fetching event statistics:', error);
+    throw new Error('Failed to fetch event statistics');
+  }
+};
+
+// For backward compatibility, keep the same function names as Firebase
+export const uploadEventImage = uploadImages;
+export const deleteEventImage = async (imageUrl) => {
+  // Extract public ID from Cloudinary URL if needed
+  const publicId = imageUrl.split('/').pop().split('.')[0];
+  
+  try {
+    await api.delete(`/upload/images/${publicId}`);
+    return true;
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    throw new Error('Failed to delete image');
+  }
+};

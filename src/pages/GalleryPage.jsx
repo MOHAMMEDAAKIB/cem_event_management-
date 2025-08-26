@@ -5,7 +5,7 @@ import SearchBar from '../components/SearchBar';
 import EventCard from '../components/EventCard';
 import EventModal from '../components/EventModal';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getAllEvents } from '../firebase/eventService';
+import { getAllEvents } from '../services/eventServiceClient';
 
 const GalleryPage = () => {
   const [allEvents, setAllEvents] = useState([]);

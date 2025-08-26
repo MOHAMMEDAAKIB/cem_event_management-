@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Search, Filter, Plus, RefreshCw, AlertTriangle } from 'lucide-react';
 import SearchBar from '../components/SearchBar';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getAllEvents } from '../firebase/eventService';
+import { getAllEvents } from '../services/eventServiceClient';
 
 export default function CalendarPage() {
   const [allEvents, setAllEvents] = useState([]);
@@ -27,21 +27,22 @@ export default function CalendarPage() {
     try {
       setLoading(true);
       setError(null);
-      const events = await getAllEvents();
+      const response = await getAllEvents();
+      const events = response.data?.events || response.data || [];
       
       // Map events for FullCalendar
       const mapped = events.map(e => ({
-        id: e.id,
+        id: e._id || e.id,
         title: e.title,
         date: e.date,
         category: e.category,
         extendedProps: {
           time: e.time,
-          location: e.location,
+          location: typeof e.location === 'string' ? e.location : e.location?.address,
           category: e.category,
           description: e.description,
           shortDescription: e.shortDescription,
-          imageUrl: e.imageUrl
+          imageUrl: e.images?.[0]?.url || e.imageUrl
         }
       }));
       

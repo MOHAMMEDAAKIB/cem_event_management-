@@ -22,7 +22,17 @@ const AdminEventForm = ({
     title: initialData?.title || '',
     date: initialData?.date || '',
     time: initialData?.time || '',
-    location: initialData?.location || '',
+    location: {
+      address: initialData?.location?.address || '',
+      city: initialData?.location?.city || '',
+      state: initialData?.location?.state || '',
+      zipCode: initialData?.location?.zipCode || ''
+    },
+    organizer: {
+      name: initialData?.organizer?.name || '',
+      email: initialData?.organizer?.email || '',
+      phone: initialData?.organizer?.phone || ''
+    },
     category: initialData?.category || 'Cultural',
     description: initialData?.description || '',
     shortDescription: initialData?.shortDescription || ''
@@ -46,6 +56,24 @@ const AdminEventForm = ({
       newErrors.date = 'Event date is required';
     }
 
+    if (!formData.location.address.trim()) {
+      newErrors.locationAddress = 'Event address is required';
+    }
+
+    if (!formData.location.city.trim()) {
+      newErrors.locationCity = 'City is required';
+    }
+
+    if (!formData.organizer.name.trim()) {
+      newErrors.organizerName = 'Organizer name is required';
+    }
+
+    if (!formData.organizer.email.trim()) {
+      newErrors.organizerEmail = 'Organizer email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.organizer.email)) {
+      newErrors.organizerEmail = 'Please enter a valid email address';
+    }
+
     if (!formData.shortDescription.trim()) {
       newErrors.shortDescription = 'Short description is required';
     } else if (formData.shortDescription.length > 150) {
@@ -56,9 +84,10 @@ const AdminEventForm = ({
       newErrors.description = 'Description is required';
     }
 
-    if (!initialData && !imageFile) {
-      newErrors.image = 'Event image is required';
-    }
+    // Image is now optional - remove the requirement
+    // if (!initialData && !imageFile) {
+    //   newErrors.image = 'Event image is required';
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -66,10 +95,23 @@ const AdminEventForm = ({
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // Handle nested object properties
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setFormData(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -255,40 +297,174 @@ const AdminEventForm = ({
                 </div>
               </div>
 
-              {/* Location and Category */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Location
-                  </label>
+              {/* Location Details */}
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-3 block">
+                  Event Location *
+                </label>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <input
+                      type="text"
+                      name="location.address"
+                      value={formData.location.address}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 rounded-xl border-2 transition-all focus:outline-none focus:ring-0 ${
+                        errors.locationAddress 
+                          ? 'border-red-300 focus:border-red-500' 
+                          : 'border-gray-200 focus:border-college-primary'
+                      }`}
+                      placeholder="Street Address *"
+                    />
+                    <AnimatePresence>
+                      {errors.locationAddress && (
+                        <motion.p
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="text-red-500 text-sm mt-1"
+                        >
+                          {errors.locationAddress}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      name="location.city"
+                      value={formData.location.city}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 rounded-xl border-2 transition-all focus:outline-none focus:ring-0 ${
+                        errors.locationCity 
+                          ? 'border-red-300 focus:border-red-500' 
+                          : 'border-gray-200 focus:border-college-primary'
+                      }`}
+                      placeholder="City *"
+                    />
+                    <AnimatePresence>
+                      {errors.locationCity && (
+                        <motion.p
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="text-red-500 text-sm mt-1"
+                        >
+                          {errors.locationCity}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4 mt-4">
                   <input
                     type="text"
-                    name="location"
-                    value={formData.location}
+                    name="location.state"
+                    value={formData.location.state}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-college-primary transition-all focus:outline-none focus:ring-0"
-                    placeholder="Event location"
+                    placeholder="State"
+                  />
+                  <input
+                    type="text"
+                    name="location.zipCode"
+                    value={formData.location.zipCode}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-college-primary transition-all focus:outline-none focus:ring-0"
+                    placeholder="ZIP Code"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                    <Tag className="w-4 h-4" />
-                    Category
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-college-primary transition-all focus:outline-none focus:ring-0"
-                  >
-                    {categories.map(category => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
+              {/* Organizer Information */}
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-3 block">
+                  Organizer Information *
+                </label>
+                <div className="space-y-4">
+                  <div>
+                    <input
+                      type="text"
+                      name="organizer.name"
+                      value={formData.organizer.name}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 rounded-xl border-2 transition-all focus:outline-none focus:ring-0 ${
+                        errors.organizerName 
+                          ? 'border-red-300 focus:border-red-500' 
+                          : 'border-gray-200 focus:border-college-primary'
+                      }`}
+                      placeholder="Organizer Name *"
+                    />
+                    <AnimatePresence>
+                      {errors.organizerName && (
+                        <motion.p
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="text-red-500 text-sm mt-1"
+                        >
+                          {errors.organizerName}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <input
+                        type="email"
+                        name="organizer.email"
+                        value={formData.organizer.email}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 rounded-xl border-2 transition-all focus:outline-none focus:ring-0 ${
+                          errors.organizerEmail 
+                            ? 'border-red-300 focus:border-red-500' 
+                            : 'border-gray-200 focus:border-college-primary'
+                        }`}
+                        placeholder="Email Address *"
+                      />
+                      <AnimatePresence>
+                        {errors.organizerEmail && (
+                          <motion.p
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="text-red-500 text-sm mt-1"
+                          >
+                            {errors.organizerEmail}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <input
+                      type="tel"
+                      name="organizer.phone"
+                      value={formData.organizer.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-college-primary transition-all focus:outline-none focus:ring-0"
+                      placeholder="Phone Number"
+                    />
+                  </div>
                 </div>
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <Tag className="w-4 h-4" />
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-college-primary transition-all focus:outline-none focus:ring-0"
+                >
+                  {categories.map(category => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Short Description */}
@@ -366,7 +542,7 @@ const AdminEventForm = ({
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
                 <ImageIcon className="w-4 h-4" />
-                Event Image {!initialData && '*'}
+                Event Image (Optional)
               </label>
               
               <div className="space-y-4">

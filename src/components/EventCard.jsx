@@ -42,7 +42,7 @@ const EventCard = ({ event, onClick, showViewMore = true }) => {
       {/* Image Section */}
       <div className="relative overflow-hidden h-64">
         <motion.img
-          src={event.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image'}
+          src={event.images?.[0]?.url || event.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image'}
           alt={event.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           whileHover={{ scale: 1.05 }}
@@ -116,7 +116,12 @@ const EventCard = ({ event, onClick, showViewMore = true }) => {
           {event.location && (
             <div className="flex items-center text-gray-600 text-sm">
               <MapPin className="w-4 h-4 mr-2 text-college-primary flex-shrink-0" />
-              <span className="truncate">{event.location}</span>
+              <span className="truncate">
+                {typeof event.location === 'string' 
+                  ? event.location 
+                  : `${event.location.address || ''}, ${event.location.city || ''}`.replace(/^,\s*/, '').replace(/,\s*$/, '')
+                }
+              </span>
             </div>
           )}
         </div>
