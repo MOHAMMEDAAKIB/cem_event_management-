@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Search, Filter, Plus, RefreshCw, AlertTriangle } from 'lucide-react';
 import SearchBar from '../components/SearchBar';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getAllEvents } from '../services/eventServiceClient';
+import { getCategoryColor as getEventCategoryColor, searchEvents, filterEventsByCategory, formatEventForCalendar } from '../utils/eventUtils';
 
 export default function CalendarPage() {
   const [allEvents, setAllEvents] = useState([]);
@@ -15,37 +17,68 @@ export default function CalendarPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
 
   const categories = ['all', 'Cultural', 'Sports', 'Workshop', 'Seminar', 'Conference', 'Competition'];
 
   useEffect(() => {
     loadEvents();
+    
+    // Add event listener for when events are updated
+    const handleEventsUpdated = () => {
+      console.log('Events updated, refreshing calendar...');
+      loadEvents(true); // Pass true to indicate this is a refresh
+    };
+
+    // Listen for custom events from admin dashboard
+    window.addEventListener('eventsUpdated', handleEventsUpdated);
+    
+    // Also listen for storage changes (if events are updated in another tab)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'eventsUpdated') {
+        handleEventsUpdated();
+      }
+    });
+
+    // Check for updates every 30 seconds when the tab is active
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        loadEvents(true);
+      }
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('eventsUpdated', handleEventsUpdated);
+      window.removeEventListener('storage', handleEventsUpdated);
+      clearInterval(interval);
+    };
   }, []);
 
-  const loadEvents = async () => {
+  const loadEvents = async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
-      const response = await getAllEvents();
-      const events = response.data?.events || response.data || [];
+      console.log('Loading events for calendar...');
       
-      // Map events for FullCalendar
-      const mapped = events.map(e => ({
-        id: e._id || e.id,
-        title: e.title,
-        date: e.date,
-        category: e.category,
-        extendedProps: {
-          time: e.time,
-          location: typeof e.location === 'string' ? e.location : e.location?.address,
-          category: e.category,
-          description: e.description,
-          shortDescription: e.shortDescription,
-          imageUrl: e.images?.[0]?.url || e.imageUrl
-        }
-      }));
+      const events = await getAllEvents();
+      console.log('Events loaded:', events);
       
+      // Handle different response structures
+      const eventsList = Array.isArray(events) ? events : 
+                        events?.data?.events || events?.data || 
+                        events?.events || [];
+      
+      console.log('Events list:', eventsList);
+      
+      // Map events for FullCalendar using the utility function
+      const mapped = eventsList.map(e => formatEventForCalendar(e));
+      
+      console.log('Mapped events for calendar:', mapped);
       setAllEvents(mapped);
       setFilteredEvents(mapped);
     } catch (err) {
@@ -53,22 +86,21 @@ export default function CalendarPage() {
       setError('Failed to load events. Please try again.');
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
   const handleSearch = query => {
     let filtered = allEvents;
     
+    // Apply category filter first
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(e => e.category === selectedCategory);
+      filtered = filterEventsByCategory(filtered, selectedCategory);
     }
     
+    // Then apply search filter
     if (query) {
-      filtered = filtered.filter(e => 
-        e.title.toLowerCase().includes(query.toLowerCase()) ||
-        e.extendedProps.description?.toLowerCase().includes(query.toLowerCase()) ||
-        e.extendedProps.shortDescription?.toLowerCase().includes(query.toLowerCase())
-      );
+      filtered = searchEvents(filtered, query);
     }
     
     setFilteredEvents(filtered);
@@ -76,25 +108,12 @@ export default function CalendarPage() {
 
   const handleCategoryFilter = (category) => {
     setSelectedCategory(category);
-    let filtered = allEvents;
-    
-    if (category !== 'all') {
-      filtered = allEvents.filter(e => e.category === category);
-    }
-    
+    let filtered = filterEventsByCategory(allEvents, category);
     setFilteredEvents(filtered);
   };
 
   const getCategoryColor = (category) => {
-    const colors = {
-      Cultural: '#8B5CF6',
-      Sports: '#3B82F6',
-      Workshop: '#10B981',
-      Seminar: '#F59E0B',
-      Conference: '#6366F1',
-      Competition: '#EF4444',
-    };
-    return colors[category] || '#6B7280';
+    return getEventCategoryColor(category);
   };
 
   return (
@@ -130,6 +149,21 @@ export default function CalendarPage() {
           </div>
         )}
 
+        {/* Refresh Notification */}
+        <AnimatePresence>
+          {isRefreshing && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-4 right-4 bg-college-primary text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 z-50"
+            >
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              Updating calendar...
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Error State */}
         {error && (
           <motion.div
@@ -142,7 +176,7 @@ export default function CalendarPage() {
               <p className="text-red-800 font-medium">{error}</p>
             </div>
             <button
-              onClick={loadEvents}
+              onClick={() => loadEvents(true)}
               className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
@@ -212,11 +246,12 @@ export default function CalendarPage() {
                       {filteredEvents.length} Events
                     </div>
                     <button
-                      onClick={loadEvents}
+                      onClick={() => loadEvents(true)}
                       className="p-2 text-gray-600 hover:text-college-primary transition-colors rounded-lg hover:bg-gray-100"
                       title="Refresh calendar"
+                      disabled={isRefreshing}
                     >
-                      <RefreshCw className="w-5 h-5" />
+                      <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
                     </button>
                   </div>
                 </div>
@@ -224,24 +259,40 @@ export default function CalendarPage() {
               <div className="p-6">
                 <div className="calendar-container">
                   <FullCalendar
-                    plugins={[dayGridPlugin, interactionPlugin]}
+                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                     initialView="dayGridMonth"
-                    events={filteredEvents.map(event => ({
-                      ...event,
-                      backgroundColor: getCategoryColor(event.category),
-                      borderColor: getCategoryColor(event.category),
-                    }))}
-                    eventClick={info => navigate(`/events/${info.event.id}`)}
+                    events={filteredEvents}
+                    eventClick={info => navigate(`/events/${info.event.extendedProps.originalId || info.event.id}`)}
                     height={600}
                     headerToolbar={{
                       left: 'prev,next today',
                       center: 'title',
-                      right: 'dayGridMonth'
+                      right: 'dayGridMonth,timeGridWeek,timeGridDay'
                     }}
                     eventDisplay="block"
                     dayMaxEvents={3}
                     moreLinkText="more events"
                     eventClassNames="cursor-pointer"
+                    displayEventTime={true}
+                    eventTimeFormat={{
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      meridiem: 'short'
+                    }}
+                    slotLabelFormat={{
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      meridiem: 'short'
+                    }}
+                    eventDidMount={(info) => {
+                      // Add custom styling or tooltips here
+                      const timeText = info.event.extendedProps.time 
+                        ? `Time: ${info.event.extendedProps.time}`
+                        : 'All day event';
+                      info.el.setAttribute('title', 
+                        `${info.event.title}\n${timeText}\nLocation: ${info.event.extendedProps.location}`
+                      );
+                    }}
                     eventMouseEnter={(info) => {
                       info.el.style.transform = 'scale(1.02)';
                       info.el.style.transition = 'transform 0.2s ease';

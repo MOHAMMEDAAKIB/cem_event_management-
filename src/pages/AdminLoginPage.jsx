@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, Shield, AlertCircle } from 'lucide-react';
-import { validateAdminLogin, setAuthenticated } from '../utils/auth';
+import { authService } from '../services/authService';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
@@ -17,16 +17,15 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      // Simulate loading time for better UX
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await authService.login(username, password);
       
-      if (validateAdminLogin(username, password)) {
-        setAuthenticated(true);
+      if (result.success) {
         navigate('/admin/dashboard');
       } else {
-        setError('Invalid username or password. Please try again.');
+        setError(result.message || 'Invalid username or password. Please try again.');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -138,10 +137,19 @@ export default function AdminLoginPage() {
               <p className="text-sm text-gray-600 mb-2">
                 Use these credentials for testing:
               </p>
-              <div className="text-sm font-mono bg-white p-2 rounded border">
+              <div className="text-sm font-mono bg-white p-2 rounded border space-y-1">
+                <div><span className="text-gray-600">Super Admin:</span></div>
+                <div>Username: <span className="font-semibold">superadmin</span></div>
+                <div>Password: <span className="font-semibold">SuperAdmin123!</span></div>
+                <div className="border-t pt-1 mt-2">
+                  <span className="text-gray-600">Regular Admin:</span>
+                </div>
                 <div>Username: <span className="font-semibold">admin</span></div>
                 <div>Password: <span className="font-semibold">admin123</span></div>
               </div>
+              <p className="text-xs text-gray-500 mt-2">
+                ⚠️ Change default passwords after first login
+              </p>
             </div>
           </div>
         </div>

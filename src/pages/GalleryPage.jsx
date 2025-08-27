@@ -5,7 +5,7 @@ import SearchBar from '../components/SearchBar';
 import EventCard from '../components/EventCard';
 import EventModal from '../components/EventModal';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getAllEvents } from '../services/eventServiceClient';
+import { getPastEvents } from '../services/eventServiceClient';
 
 const GalleryPage = () => {
   const [allEvents, setAllEvents] = useState([]);
@@ -19,21 +19,51 @@ const GalleryPage = () => {
 
   const categories = ['all', 'Cultural', 'Sports', 'Workshop', 'Seminar', 'Conference', 'Competition'];
 
-  // Load events from Firebase
+  // Load past events only
   useEffect(() => {
     loadEvents();
+    
+    // Add event listener for when events are updated
+    const handleEventsUpdated = () => {
+      console.log('Events updated, refreshing gallery...');
+      loadEvents();
+    };
+
+    // Listen for custom events from admin dashboard
+    window.addEventListener('eventsUpdated', handleEventsUpdated);
+    
+    // Also listen for storage changes (if events are updated in another tab)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'eventsUpdated') {
+        handleEventsUpdated();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('eventsUpdated', handleEventsUpdated);
+      window.removeEventListener('storage', handleEventsUpdated);
+    };
   }, []);
 
   const loadEvents = async () => {
     try {
       setLoading(true);
       setError(null);
-      const events = await getAllEvents();
-      setAllEvents(events);
-      setFiltered(events);
+      console.log('Loading past events for gallery...');
+      
+      const events = await getPastEvents();
+      console.log('Past events loaded:', events);
+      
+      // Handle different response structures
+      const eventsList = Array.isArray(events) ? events : 
+                        events?.data?.events || events?.data || 
+                        events?.events || [];
+      
+      setAllEvents(eventsList);
+      setFiltered(eventsList);
     } catch (err) {
-      console.error('Error loading events:', err);
-      setError('Failed to load events. Please try again.');
+      console.error('Error loading past events:', err);
+      setError('Failed to load past events. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -113,26 +143,27 @@ const GalleryPage = () => {
           className="text-center mb-12"
         >
           <div className="flex items-center justify-center gap-3 mb-4">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="w-16 h-16 bg-gradient-to-br from-college-primary to-college-primary/80 rounded-2xl flex items-center justify-center shadow-lg"
-            >
-              <Camera className="w-8 h-8 text-white" />
-            </motion.div>
             <h1 className="heading-1 text-college-primary mb-0 font-serif">Event Gallery</h1>
           </div>
+          
+          {/* Past Events Badge */}
+          <div className="flex justify-center mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-college-secondary/20 border border-college-secondary/30 rounded-full">
+              <Calendar className="w-4 h-4 text-college-secondary" />
+              <span className="text-sm font-semibold text-gray-700">Past Events Collection</span>
+            </div>
+          </div>
+          
           <p className="text-lg text-gray-600 max-w-2xl mx-auto font-light">
-            Explore the wonderful memories from our events. Browse through 
-            photos and relive the amazing moments from our college community.
+            Explore the wonderful memories from our past events. Browse through 
+            photos and relive the amazing moments from our college community's completed events.
           </p>
         </motion.div>
 
         {/* Loading State */}
         {loading && (
           <div className="flex justify-center py-20">
-            <LoadingSpinner size="large" text="Loading events..." />
+            <LoadingSpinner size="large" text="Loading past events..." />
           </div>
         )}
 
@@ -171,16 +202,16 @@ const GalleryPage = () => {
               <div className="p-8">
                 <div className="space-y-6">
                   {/* Search Bar */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Search className="w-5 h-5 text-college-primary" />
-                      <span className="font-semibold text-gray-700">Search Events</span>
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Search className="w-5 h-5 text-college-primary" />
+                        <span className="font-semibold text-gray-700">Search Past Events</span>
+                      </div>
+                      <SearchBar 
+                        onSearch={handleSearch} 
+                        placeholder="Search by event name, description..."
+                      />
                     </div>
-                    <SearchBar 
-                      onSearch={handleSearch} 
-                      placeholder="Search by event name, description..."
-                    />
-                  </div>
 
                   {/* Filters */}
                   <div className="grid md:grid-cols-2 gap-6">
@@ -238,7 +269,7 @@ const GalleryPage = () => {
                   {/* Results Count */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                     <div className="text-sm text-gray-600">
-                      Showing {filtered.length} of {allEvents.length} events
+                      Showing {filtered.length} of {allEvents.length} past events
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
@@ -271,9 +302,9 @@ const GalleryPage = () => {
                   <div className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
                     <Camera className="w-16 h-16 text-gray-400" />
                   </div>
-                  <h2 className="text-3xl font-bold text-gray-600 mb-4 font-serif">No events found</h2>
+                  <h2 className="text-3xl font-bold text-gray-600 mb-4 font-serif">No past events found</h2>
                   <p className="text-gray-500 mb-8 max-w-md mx-auto">
-                    We couldn't find any events matching your criteria. Try adjusting your search or filters.
+                    We couldn't find any past events matching your criteria. Try adjusting your search or filters.
                   </p>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -281,7 +312,7 @@ const GalleryPage = () => {
                     onClick={resetFilters}
                     className="px-8 py-3 bg-college-primary text-white rounded-xl hover:bg-college-primary/90 transition-colors font-medium shadow-lg"
                   >
-                    Show All Events
+                    Show All Past Events
                   </motion.button>
                 </motion.div>
               ) : (
@@ -293,7 +324,7 @@ const GalleryPage = () => {
                 >
                   {filtered.map((event, index) => (
                     <motion.div
-                      key={event.id}
+                      key={event._id || event.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}

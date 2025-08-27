@@ -26,7 +26,8 @@ import {
   getUpcomingEvents,
   getPastEvents
 } from '../services/eventServiceClient';
-import { logout } from '../utils/auth';
+import { authService } from '../services/authService';
+import { triggerCalendarRefresh } from '../utils/eventUtils';
 
 export default function AdminDashboard() {
   const [events, setEvents] = useState([]);
@@ -38,9 +39,13 @@ export default function AdminDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [currentAdmin, setCurrentAdmin] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Get current admin info
+    const admin = authService.getCurrentAdmin();
+    setCurrentAdmin(admin);
     loadAllData();
   }, []);
 
@@ -83,6 +88,8 @@ export default function AdminDashboard() {
       // Convert single image file to array for the API
       const imageFiles = imageFile ? [imageFile] : [];
       const newEvent = await createEvent(eventData, imageFiles);
+      
+      // Update local state
       setEvents(prev => [newEvent, ...prev]);
       
       // Update other lists if needed
@@ -95,6 +102,9 @@ export default function AdminDashboard() {
       
       setShowForm(false);
       setEditing(null);
+      
+      // Trigger calendar refresh
+      triggerCalendarRefresh();
     } catch (err) {
       console.error('Error creating event:', err);
       setError('Failed to create event. Please try again.');
@@ -108,14 +118,23 @@ export default function AdminDashboard() {
       setSubmitting(true);
       // Convert single image file to array for the API
       const imageFiles = imageFile ? [imageFile] : [];
-      const updatedEvent = await updateEvent(editing.id, eventData, imageFiles);
       
-      setEvents(prev => prev.map(e => e.id === editing.id ? updatedEvent : e));
-      setUpcomingEvents(prev => prev.map(e => e.id === editing.id ? updatedEvent : e));
-      setPastEvents(prev => prev.map(e => e.id === editing.id ? updatedEvent : e));
+      // Use the correct ID format (_id or id)
+      const eventId = editing._id || editing.id;
+      console.log('Updating event with ID:', eventId, 'Event data:', eventData, 'Image file:', imageFile);
+      
+      const updatedEvent = await updateEvent(eventId, eventData, imageFiles);
+      
+      // Update local state
+      setEvents(prev => prev.map(e => (e._id || e.id) === eventId ? updatedEvent : e));
+      setUpcomingEvents(prev => prev.map(e => (e._id || e.id) === eventId ? updatedEvent : e));
+      setPastEvents(prev => prev.map(e => (e._id || e.id) === eventId ? updatedEvent : e));
       
       setShowForm(false);
       setEditing(null);
+      
+      // Trigger calendar refresh
+      triggerCalendarRefresh();
     } catch (err) {
       console.error('Error updating event:', err);
       setError('Failed to update event. Please try again.');
@@ -126,11 +145,17 @@ export default function AdminDashboard() {
 
   const handleDeleteEvent = async (eventId) => {
     try {
+      console.log('Deleting event with ID:', eventId);
       await deleteEvent(eventId);
-      setEvents(prev => prev.filter(e => e.id !== eventId));
-      setUpcomingEvents(prev => prev.filter(e => e.id !== eventId));
-      setPastEvents(prev => prev.filter(e => e.id !== eventId));
+      
+      // Update local state - check both _id and id for compatibility
+      setEvents(prev => prev.filter(e => (e._id || e.id) !== eventId));
+      setUpcomingEvents(prev => prev.filter(e => (e._id || e.id) !== eventId));
+      setPastEvents(prev => prev.filter(e => (e._id || e.id) !== eventId));
       setDeleteConfirm(null);
+      
+      // Trigger calendar refresh
+      triggerCalendarRefresh();
     } catch (err) {
       console.error('Error deleting event:', err);
       setError('Failed to delete event. Please try again.');
@@ -138,7 +163,7 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    logout();
+    authService.logout();
     navigate('/admin/login');
   };
 
@@ -196,14 +221,7 @@ export default function AdminDashboard() {
         <div className="container">
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center gap-4">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2 }}
-                className="w-12 h-12 bg-gradient-to-br from-college-primary to-college-primary/80 rounded-2xl flex items-center justify-center shadow-lg"
-              >
-                <Settings className="w-6 h-6 text-white" />
-              </motion.div>
+              
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 font-serif">Admin Dashboard</h1>
                 <p className="text-gray-600">Manage your events and content</p>
@@ -217,6 +235,18 @@ export default function AdminDashboard() {
               >
                 <RefreshCw className="w-5 h-5" />
               </button>
+              
+              {/* Admin Management Button - only show if user has permission */}
+              {(currentAdmin?.permissions?.canManageAdmins || currentAdmin?.role === 'super_admin') && (
+                <button
+                  onClick={() => navigate('/admin/management')}
+                  className="flex items-center gap-2 px-4 py-2 border-2 border-blue-300 text-blue-700 rounded-xl hover:bg-blue-50 transition-colors font-medium"
+                >
+                  <Users className="w-4 h-4" />
+                  Manage Admins
+                </button>
+              )}
+              
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
@@ -350,7 +380,7 @@ export default function AdminDashboard() {
                   <div className="space-y-1">
                     {events.slice(0, 5).map((event, index) => (
                       <motion.div
-                        key={event.id}
+                        key={event._id || event.id}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.1 + index * 0.1 }}
@@ -567,7 +597,7 @@ export default function AdminDashboard() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleDeleteEvent(deleteConfirm.id)}
+                  onClick={() => handleDeleteEvent(deleteConfirm._id || deleteConfirm.id)}
                   className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
                 >
                   Delete

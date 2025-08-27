@@ -39,6 +39,13 @@ const LandingPage = () => {
       try {
         setIsLoadingEvents(true);
         const events = await getUpcomingEvents({ limit: 6 });
+        console.log('Fetched upcoming events:', events);
+        // Debug log first event to check ID structure
+        if (events && events.length > 0) {
+          console.log('First event structure:', events[0]);
+          console.log('Event ID (_id):', events[0]._id);
+          console.log('Event ID (id):', events[0].id);
+        }
         setUpcomingEvents(events);
       } catch (error) {
         console.error('Error fetching upcoming events:', error);
@@ -364,8 +371,10 @@ const LandingPage = () => {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-green"></div>
             </div>
           ) : upcomingEvents.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-              {upcomingEvents.map((event, index) => (
+            <div>
+              
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                {upcomingEvents.map((event, index) => (
                 <div 
                   key={event._id} 
                   className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
@@ -449,16 +458,27 @@ const LandingPage = () => {
                       )}
                     </div>
 
-                    <Link
-                      to={`/events/${event._id}`}
-                      className="inline-flex items-center text-primary-green hover:text-primary-green-dark font-medium transition-colors duration-200"
-                    >
-                      Learn More
-                      <ArrowRight className="w-4 h-4 ml-1" />
-                    </Link>
+                    {/* Only show Learn More if event has a valid ID */}
+                    {(event._id || event.id) && (
+                      <Link
+                        to={`/events/${event._id || event.id}`}
+                        className="inline-flex items-center text-primary-green hover:text-primary-green-dark font-medium transition-colors duration-200"
+                      >
+                        Learn More
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </Link>
+                    )}
+                    
+                    {/* Debug information - remove in production */}
+                    {(!event._id && !event.id) && (
+                      <span className="text-red-500 text-sm">
+                        Debug: Event has no ID (_id: {JSON.stringify(event._id)}, id: {JSON.stringify(event.id)})
+                      </span>
+                    )}
                   </div>
                 </div>
-              ))}
+                ))}
+              </div>
             </div>
           ) : (
             <div className="text-center py-12">

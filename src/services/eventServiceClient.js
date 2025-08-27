@@ -147,15 +147,22 @@ export const updateEvent = async (eventId, eventData, newImageFiles = [], images
 
     // Upload new images if provided
     if (newImageFiles && newImageFiles.length > 0) {
+      console.log('Uploading new images:', newImageFiles.length);
       newImages = await uploadImages(newImageFiles);
+      console.log('Images uploaded successfully:', newImages);
     }
 
-    const response = await api.put(`/events/${eventId}`, {
+    const updateData = {
       ...eventData,
       newImages,
       imagesToDelete,
-    });
+    };
 
+    console.log('Sending update request for event:', eventId, 'with data:', updateData);
+
+    const response = await api.put(`/events/${eventId}`, updateData);
+
+    console.log('Update response:', response.data);
     return response.data.success ? response.data.data : response.data;
   } catch (error) {
     console.error('Error updating event:', error);

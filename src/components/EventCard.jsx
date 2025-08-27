@@ -128,7 +128,7 @@ const EventCard = ({ event, onClick, showViewMore = true }) => {
 
         {/* Action Button */}
         {showViewMore && (
-          <Link to={`/events/${event.id}`}>
+          <Link to={`/events/${event._id || event.id}`}>
             <motion.button
               whileHover={{ x: 4 }}
               whileTap={{ scale: 0.98 }}

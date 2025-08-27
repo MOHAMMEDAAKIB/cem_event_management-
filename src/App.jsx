@@ -5,6 +5,7 @@ import EventDetailsPage from './pages/EventDetailsPage';
 import GalleryPage from './pages/GalleryPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminManagement from './pages/AdminManagement';
 import LandingPage from './pages/LandingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
@@ -29,6 +30,11 @@ function App() {
         <Route path="/admin/dashboard" element={
           <ProtectedRoute>
             <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/management" element={
+          <ProtectedRoute>
+            <AdminManagement />
           </ProtectedRoute>
         } />
         <Route path="*" element={<NotFound />} />

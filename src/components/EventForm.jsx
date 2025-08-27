@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Calendar, Clock, MapPin, FileText, Users, Upload, Save } from 'lucide-react';
+import { triggerCalendarRefresh } from '../utils/eventUtils';
 
 export default function EventForm({ event, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -65,6 +66,9 @@ export default function EventForm({ event, onClose, onSave }) {
       };
       
       onSave(eventData);
+      
+      // Trigger calendar refresh after saving
+      triggerCalendarRefresh();
     } catch (err) {
       console.error('Error saving event:', err);
     } finally {

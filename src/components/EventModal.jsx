@@ -152,7 +152,7 @@ const EventModal = ({ event, isOpen, onClose }) => {
                   Close
                 </button>
                 <Link
-                  to={`/events/${event.id}`}
+                  to={`/events/${event._id || event.id}`}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-college-primary text-white rounded-xl hover:bg-college-primary/90 transition-colors font-medium"
                 >
                   <ExternalLink className="w-4 h-4" />

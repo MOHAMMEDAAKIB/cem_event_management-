@@ -1,4 +1,6 @@
 import express from 'express';
+import Event from '../src/models/Event.js';
+import { deleteMultipleImages } from '../src/services/imageService.js';
 import {
   createEvent,
   getAllEvents,
@@ -214,6 +216,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { newImages, imagesToDelete, ...eventData } = req.body;
+    console.log('Update request - ID:', req.params.id, 'New images:', newImages, 'Images to delete:', imagesToDelete);
     
     // Process the event data
     const processedEventData = {
@@ -224,23 +227,46 @@ router.put('/:id', async (req, res) => {
       processedEventData.date = new Date(eventData.date);
     }
 
-    const event = await updateEvent(
-      req.params.id,
-      processedEventData,
-      [], // newImageFiles - handled separately in frontend
-      imagesToDelete || []
-    );
-
-    // Add new images if provided
-    if (newImages && newImages.length > 0) {
-      event.images = [...(event.images || []), ...newImages];
-      await event.save();
+    // Get the existing event
+    const existingEvent = await Event.findById(req.params.id);
+    if (!existingEvent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
     }
+
+    // Handle image deletions if specified
+    if (imagesToDelete && imagesToDelete.length > 0) {
+      console.log('Deleting images with public IDs:', imagesToDelete);
+      try {
+        await deleteMultipleImages(imagesToDelete);
+        existingEvent.images = existingEvent.images.filter(
+          img => !imagesToDelete.includes(img.publicId)
+        );
+      } catch (deleteError) {
+        console.warn('Error deleting images:', deleteError);
+        // Continue with update even if image deletion fails
+      }
+    }
+
+    // Handle new images (these are already uploaded to Cloudinary by frontend)
+    if (newImages && newImages.length > 0) {
+      console.log('Adding new images:', newImages);
+      existingEvent.images = [...(existingEvent.images || []), ...newImages];
+    }
+
+    // Update the event data
+    Object.assign(existingEvent, processedEventData);
     
+    // Save the updated event
+    const savedEvent = await existingEvent.save();
+    console.log('Event updated successfully with images:', savedEvent.images?.length || 0);
+
     res.status(200).json({
       success: true,
       message: 'Event updated successfully',
-      data: event
+      data: savedEvent
     });
   } catch (error) {
     console.error('Update event error:', error);

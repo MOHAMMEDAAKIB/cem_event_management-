@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import Event from './src/models/Event.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 // Configure environment variables
 dotenv.config();
@@ -58,6 +59,9 @@ app.get('/health', (req, res) => {
 
 // Upload routes
 app.use('/api/upload', uploadRoutes);
+
+// Admin routes
+app.use('/api/admin', adminRoutes);
 
 // Get all events
 app.get('/api/events', async (req, res) => {
