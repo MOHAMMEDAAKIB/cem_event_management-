@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, ArrowRight, Star, Users, Trophy, Camera } from 'lucide-react';
+import { Calendar, ArrowRight, Star, Users, Trophy, Camera, MapPin, Clock } from 'lucide-react';
 import { gsap } from 'gsap';
+import { getUpcomingEvents } from '../services/eventServiceClient';
 
 // Import images
 import statsImage from './assets/Schedule-amico.png';
@@ -11,6 +12,8 @@ import image3 from '../images/NEWY62.jpg';
 
 const LandingPage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const images = [image1, image2, image3];
   
   // GSAP refs
@@ -29,6 +32,24 @@ const LandingPage = () => {
 
     return () => clearInterval(interval);
   }, [images.length]);
+
+  // Fetch upcoming events
+  useEffect(() => {
+    const fetchUpcomingEvents = async () => {
+      try {
+        setIsLoadingEvents(true);
+        const events = await getUpcomingEvents({ limit: 6 });
+        setUpcomingEvents(events);
+      } catch (error) {
+        console.error('Error fetching upcoming events:', error);
+        setUpcomingEvents([]);
+      } finally {
+        setIsLoadingEvents(false);
+      }
+    };
+
+    fetchUpcomingEvents();
+  }, []);
 
   // GSAP Animations
   useEffect(() => {
@@ -323,6 +344,147 @@ const LandingPage = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Upcoming Events Section */}
+      <section className="section-padding bg-white">
+        <div className="container px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-6">
+              Upcoming Events
+            </h2>
+            <p className="text-lg text-muted max-w-2xl mx-auto">
+              Don't miss out on these exciting upcoming events at Jaffna College of Education
+            </p>
+          </div>
+
+          {isLoadingEvents ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-green"></div>
+            </div>
+          ) : upcomingEvents.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {upcomingEvents.map((event, index) => (
+                <div 
+                  key={event._id} 
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  onMouseEnter={(e) => {
+                    gsap.to(e.target, {
+                      y: -10,
+                      scale: 1.05,
+                      duration: 0.3,
+                      ease: "power2.out"
+                    });
+                  }}
+                  onMouseLeave={(e) => {
+                    gsap.to(e.target, {
+                      y: 0,
+                      scale: 1,
+                      duration: 0.3,
+                      ease: "power2.out"
+                    });
+                  }}
+                >
+                  {/* Event Image */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={event.images?.[0]?.url || event.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image'}
+                      alt={event.title}
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                    />
+                    <div className="absolute top-4 right-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        event.category === 'Cultural' ? 'bg-purple-100 text-purple-800' :
+                        event.category === 'Sports' ? 'bg-blue-100 text-blue-800' :
+                        event.category === 'Workshop' ? 'bg-green-100 text-green-800' :
+                        event.category === 'Academic' ? 'bg-orange-100 text-orange-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {event.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Event Details */}
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2">
+                      {event.title}
+                    </h3>
+                    
+                    <p className="text-gray-600 mb-4 line-clamp-2">
+                      {event.description}
+                    </p>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Calendar className="w-4 h-4 mr-2 text-primary-green" />
+                        <span>
+                          {new Date(event.date).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                      
+                      {event.time && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Clock className="w-4 h-4 mr-2 text-primary-green" />
+                          <span>{event.time}</span>
+                        </div>
+                      )}
+                      
+                      {event.location && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <MapPin className="w-4 h-4 mr-2 text-primary-green" />
+                          <span className="line-clamp-1">
+                            {typeof event.location === 'string' 
+                              ? event.location 
+                              : `${event.location.address || ''}, ${event.location.city || ''}`.replace(/^,\s*/, '').replace(/,\s*$/, '')
+                            }
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <Link
+                      to={`/events/${event._id}`}
+                      className="inline-flex items-center text-primary-green hover:text-primary-green-dark font-medium transition-colors duration-200"
+                    >
+                      Learn More
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">No Upcoming Events</h3>
+              <p className="text-gray-500">Check back soon for new events!</p>
+            </div>
+          )}
+
+          {upcomingEvents.length > 0 && (
+            <div className="text-center mt-12">
+              <Link 
+                to="/calendar" 
+                className="btn btn-outline btn-lg transform transition-all duration-300 hover:scale-105"
+                onMouseEnter={(e) => {
+                  gsap.to(e.target, { scale: 1.05, duration: 0.3, ease: "power2.out" });
+                }}
+                onMouseLeave={(e) => {
+                  gsap.to(e.target, { scale: 1, duration: 0.3, ease: "power2.out" });
+                }}
+              >
+                View All Events
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
