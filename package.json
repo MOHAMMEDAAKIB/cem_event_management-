@@ -12,7 +12,8 @@
     "start": "concurrently \"npm run server:dev\" \"npm run dev\"",
     "start:prod": "npm run build && concurrently \"npm run server\" \"npm run preview\"",
     "init:db": "node scripts/init-database.js",
-    "init:admin": "node scripts/init-admin.js"
+    "init:admin": "node scripts/init-admin.js",
+    "test:atlas": "node scripts/test-atlas-connection.js"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.19",

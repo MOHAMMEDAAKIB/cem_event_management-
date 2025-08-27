@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
+import connectDB from './src/config/database.js';
 import Event from './src/models/Event.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -12,19 +12,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
-const connectDB = async () => {
-  try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cem_events';
-    await mongoose.connect(mongoURI);
-    console.log('✅ MongoDB Connected Successfully');
-  } catch (error) {
-    console.error('❌ MongoDB Connection Error:', error.message);
-    process.exit(1);
-  }
-};
-
-// Connect to database
+// Connect to MongoDB using the enhanced connection
 connectDB();
 
 // Middleware
