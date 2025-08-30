@@ -15,7 +15,26 @@ const LandingPage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
-  const images = [image1, image2, image3];
+  
+  // Event carousel data with images and descriptions
+  // TO ADD NEW CAROUSEL EVENTS: 
+  // 1. Add your image to the src/images/ folder
+  // 2. Import it at the top of this file (e.g., import newImage from '../images/newimage.jpg')
+  // 3. Add a new object to this array with the format: { image: newImage, description: "Your description here" }
+  const carouselEvents = [
+    { 
+      image: image1, 
+      description: "Annual Tech Conference 2025 - Embracing Innovation and Digital Transformation" 
+    },
+    { 
+      image: image2, 
+      description: "Cultural Night Celebration - Showcasing Diverse Talents and Traditions" 
+    },
+    { 
+      image: image3, 
+      description: "Sports Day Highlights - Athletic Excellence and Team Spirit" 
+    }
+  ];
   
   // GSAP refs
   const heroSectionRef = useRef(null);
@@ -27,12 +46,12 @@ const LandingPage = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => 
-        prevIndex === images.length - 1 ? 0 : prevIndex + 1
+        prevIndex === carouselEvents.length - 1 ? 0 : prevIndex + 1
       );
-    }, 4000);
+    }, 5000); // Increased to 5 seconds for better viewing
 
     return () => clearInterval(interval);
-  }, [images.length]);
+  }, [carouselEvents.length]);
 
   // Fetch upcoming events
   useEffect(() => {
@@ -55,24 +74,25 @@ const LandingPage = () => {
   // GSAP Animations
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Initial setup - set images for floating animation
-      imageRefs.current.forEach((img, index) => {
+      // Initial setup - set images for subtle floating animation
+      carouselEvents.forEach((_, index) => {
+        const img = imageRefs.current[index];
         if (img) {
           gsap.set(img, {
-            scale: 1.1,
+            scale: 1.02,
             transformOrigin: "center center"
           });
           
-          // Floating animation for each image
+          // Subtle floating animation for each image
           gsap.to(img, {
-            y: index % 2 === 0 ? -15 : -25,
-            x: index % 2 === 0 ? 10 : -10,
+            y: index % 2 === 0 ? -8 : -12,
+            x: index % 2 === 0 ? 5 : -5,
             scale: 1.05,
-            duration: 6 + index * 0.5,
+            duration: 8 + index * 0.5,
             ease: "power2.inOut",
             repeat: -1,
             yoyo: true,
-            delay: index * 0.3
+            delay: index * 0.5
           });
         }
       });
@@ -80,8 +100,8 @@ const LandingPage = () => {
       // Overlay gradient animation
       if (overlayRef.current) {
         gsap.to(overlayRef.current, {
-          background: "linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%)",
-          duration: 8,
+          background: "linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+          duration: 10,
           ease: "power2.inOut",
           repeat: -1,
           yoyo: true
@@ -117,28 +137,29 @@ const LandingPage = () => {
     }, heroSectionRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [carouselEvents]);
 
   // Handle image transition animations
   useEffect(() => {
-    imageRefs.current.forEach((img, index) => {
-      if (img) {
+    carouselEvents.forEach((_, index) => {
+      const imageContainer = imageRefs.current[index]?.parentElement;
+      if (imageContainer) {
         if (index === currentImageIndex) {
-          gsap.to(img, {
+          gsap.to(imageContainer, {
             opacity: 1,
-            duration: 1,
+            duration: 1.2,
             ease: "power2.inOut"
           });
         } else {
-          gsap.to(img, {
+          gsap.to(imageContainer, {
             opacity: 0,
-            duration: 1,
+            duration: 1.2,
             ease: "power2.inOut"
           });
         }
       }
     });
-  }, [currentImageIndex]);
+  }, [currentImageIndex, carouselEvents]);
 
   const goToSlide = (index) => {
     setCurrentImageIndex(index);
@@ -191,32 +212,50 @@ const LandingPage = () => {
         {/* Image Container with Proper Padding */}
         <div className="relative w-full h-full px-6 sm:px-8 lg:px-12">
           <div className="relative w-full h-full max-w-8xl mx-auto rounded-3xl overflow-hidden shadow-2xl">
-            {images.map((image, index) => (
-              <img
-                key={index}
-                ref={el => imageRefs.current[index] = el}
-                src={image}
-                alt={`Event ${index + 1}`}
-                className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out"
+            {carouselEvents.map((event, index) => (
+              <div
+                key={`carousel-event-${index}`}
+                className="absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out"
                 style={{
                   opacity: index === currentImageIndex ? 1 : 0,
-                  filter: 'brightness(1.1) contrast(1.1) saturate(1.1)',
-                  transform: index === currentImageIndex ? 'scale(1)' : 'scale(1.05)',
+                  zIndex: index === currentImageIndex ? 2 : 1
                 }}
-              />
+              >
+                <img
+                  ref={el => imageRefs.current[index] = el}
+                  src={event.image}
+                  alt={`Event ${index + 1}`}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{
+                    filter: 'brightness(1.1) contrast(1.1) saturate(1.1)',
+                    transform: 'scale(1.02)',
+                  }}
+                />
+                
+                {/* Event Description Overlay - Bottom Positioned */}
+                <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 lg:px-16 pb-16 sm:pb-20">
+                  <div className="text-center max-w-5xl mx-auto">
+                    <div className="bg-black/60 backdrop-blur-md rounded-xl px-8 py-6 sm:px-12 sm:py-8 lg:px-16 lg:py-10 border border-white/30">
+                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-relaxed">
+                        {event.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
           
           {/* Animated Carousel Overlay */}
           <div 
             ref={overlayRef}
-            className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"
+            className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none"
           />
           
           {/* Animated Carousel Dots */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4 z-10">
-            {images.map((_, index) => (
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4 z-20">
+            {carouselEvents.map((_, index) => (
               <button
-                key={index}
+                key={`carousel-dot-${index}`}
                 ref={el => dotsRef.current[index] = el}
                 onClick={() => goToSlide(index)}
                 className={`relative w-4 h-4 rounded-full transition-all duration-300 transform hover:scale-125 ${
@@ -478,7 +517,7 @@ const LandingPage = () => {
           {upcomingEvents.length > 0 && (
             <div className="text-center mt-12">
               <Link 
-                to="/calendar" 
+                to="/events" 
                 className="btn btn-outline btn-lg transform transition-all duration-300 hover:scale-105"
                 onMouseEnter={(e) => {
                   gsap.to(e.target, { scale: 1.05, duration: 0.3, ease: "power2.out" });
