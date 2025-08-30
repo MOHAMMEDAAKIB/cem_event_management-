@@ -33,7 +33,9 @@ export const createEvent = async (eventData, imageFiles = []) => {
     // Upload images first if provided
     if (imageFiles && imageFiles.length > 0) {
       try {
+        console.log('Uploading images:', imageFiles.length);
         images = await uploadImages(imageFiles);
+        console.log('Images uploaded successfully:', images);
       } catch (uploadError) {
         console.warn('Image upload failed, proceeding without images:', uploadError);
         // Continue with event creation even if image upload fails
@@ -41,14 +43,23 @@ export const createEvent = async (eventData, imageFiles = []) => {
       }
     }
 
-    const response = await api.post('/events', {
+    // Prepare event data with uploaded images
+    const eventDataWithImages = {
       ...eventData,
-      images,
-    });
+      images: images.length > 0 ? images : []
+    };
 
-    return response.data.success ? response.data.data : response.data;
+    console.log('Creating event with data:', eventDataWithImages);
+
+    const response = await api.post('/events', eventDataWithImages);
+
+    const createdEvent = response.data.success ? response.data.data : response.data;
+    console.log('Event created successfully:', createdEvent);
+    
+    return createdEvent;
   } catch (error) {
     console.error('Error creating event:', error);
+    console.error('Error response:', error.response?.data);
     throw new Error(error.response?.data?.message || 'Failed to create event');
   }
 };

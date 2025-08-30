@@ -42,10 +42,13 @@ const EventCard = ({ event, onClick, showViewMore = true }) => {
       {/* Image Section */}
       <div className="relative overflow-hidden h-64">
         <motion.img
-          src={event.images?.[0]?.url || event.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image'}
+          src={event.images?.[0]?.url || event.imageUrl || 'https://via.placeholder.com/800x400/1B4D3E/FFFFFF?text=Event+Image'}
           alt={event.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           whileHover={{ scale: 1.05 }}
+          onError={(e) => {
+            e.target.src = 'https://via.placeholder.com/800x400/1B4D3E/FFFFFF?text=Event+Image';
+          }}
         />
         
         {/* Date Badge */}
@@ -128,7 +131,7 @@ const EventCard = ({ event, onClick, showViewMore = true }) => {
 
         {/* Action Button */}
         {showViewMore && (
-          <Link to={`/events/${event.id}`}>
+          <Link to={`/events/${event._id || event.id}`}>
             <motion.button
               whileHover={{ x: 4 }}
               whileTap={{ scale: 0.98 }}

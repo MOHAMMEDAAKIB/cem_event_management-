@@ -11,6 +11,7 @@ import {
   Tag,
   Clock
 } from 'lucide-react';
+import { uploadMultipleImages } from '../services/imageService';
 
 const AdminEventForm = ({ 
   onSubmit, 
@@ -170,14 +171,18 @@ const AdminEventForm = ({
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
       return;
     }
 
-    onSubmit(formData, imageFile);
+    // Create an array to hold image files if they exist
+    const imageFiles = imageFile ? [imageFile] : [];
+    
+    // Call the onSubmit function with form data and image files array
+    onSubmit(formData, imageFiles);
   };
 
   return (

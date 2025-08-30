@@ -286,9 +286,12 @@ const EventsPage = () => {
                       {event.images && event.images.length > 0 && (
                         <div className="w-full">
                           <img
-                            src={event.images[0].url || event.images[0]}
+                            src={event.images[0]?.url || event.images[0]}
                             alt={event.title}
                             className="w-full h-58 object-cover rounded-xl"
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/800x400/1B4D3E/FFFFFF?text=No+Image';
+                            }}
                           />
                         </div>
                       )}

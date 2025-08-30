@@ -84,11 +84,12 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleCreateEvent = async (eventData, imageFile) => {
+  const handleCreateEvent = async (eventData, imageFiles) => {
     try {
       setSubmitting(true);
-      // Convert single image file to array for the API
-      const imageFiles = imageFile ? [imageFile] : [];
+      console.log('Creating event with data:', eventData);
+      console.log('Image files:', imageFiles);
+      
       const newEvent = await createEvent(eventData, imageFiles);
       
       // Ensure the event has proper ID field
@@ -117,11 +118,12 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleUpdateEvent = async (eventData, imageFile) => {
+  const handleUpdateEvent = async (eventData, imageFiles) => {
     try {
       setSubmitting(true);
-      // Convert single image file to array for the API
-      const imageFiles = imageFile ? [imageFile] : [];
+      console.log('Updating event with data:', eventData);
+      console.log('Image files:', imageFiles);
+      
       const updatedEvent = await updateEvent(editing.id, eventData, imageFiles);
       
       setEvents(prev => prev.map(e => e.id === editing.id ? updatedEvent : e));
@@ -321,14 +323,15 @@ export default function AdminDashboard() {
                   <Plus className="w-5 h-5" />
                   Add New Event
                 </motion.button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium">
-                  <BarChart3 className="w-5 h-5" />
-                  View Analytics
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 bg-college-secondary text-gray-800 rounded-xl hover:bg-college-secondary/90 transition-colors font-medium">
-                  <Users className="w-5 h-5" />
-                  Manage Users
-                </button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate('/admin/carousel')}
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-college-secondary text-gray-800 rounded-xl hover:bg-college-secondary/90 transition-colors font-medium shadow-lg"
+                >
+                  <Eye className="w-5 h-5" />
+                  Manage Carousel
+                </motion.button>
               </div>
             </div>
           </motion.div>

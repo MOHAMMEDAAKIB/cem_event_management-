@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import Event from './src/models/Event.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import carouselRoutes, { initializeDefaultCarouselItems } from './routes/carouselRoutes.js';
 
 // Configure environment variables
 dotenv.config();
@@ -17,6 +18,10 @@ const connectDB = async () => {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cem_events';
     await mongoose.connect(mongoURI);
     console.log('✅ MongoDB Connected Successfully');
+    
+    // Initialize default carousel items after DB connection
+    await initializeDefaultCarouselItems();
+    
   } catch (error) {
     console.error('❌ MongoDB Connection Error:', error.message);
     process.exit(1);
@@ -58,6 +63,9 @@ app.get('/health', (req, res) => {
 
 // Upload routes
 app.use('/api/upload', uploadRoutes);
+
+// Carousel routes
+app.use('/api/carousel', carouselRoutes);
 
 // Get all events
 app.get('/api/events', async (req, res) => {

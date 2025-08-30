@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, ArrowRight, Star, Users, Trophy, Camera, MapPin, Clock } from 'lucide-react';
 import { gsap } from 'gsap';
 import { getUpcomingEvents } from '../services/eventServiceClient';
+import { carouselService } from '../services/carouselService';
 
 // Import images
 import statsImage from './assets/Schedule-amico.png';
@@ -15,26 +16,8 @@ const LandingPage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
-  
-  // Event carousel data with images and descriptions
-  // TO ADD NEW CAROUSEL EVENTS: 
-  // 1. Add your image to the src/images/ folder
-  // 2. Import it at the top of this file (e.g., import newImage from '../images/newimage.jpg')
-  // 3. Add a new object to this array with the format: { image: newImage, description: "Your description here" }
-  const carouselEvents = [
-    { 
-      image: image1, 
-      description: "Annual Tech Conference 2025 - Embracing Innovation and Digital Transformation" 
-    },
-    { 
-      image: image2, 
-      description: "Cultural Night Celebration - Showcasing Diverse Talents and Traditions" 
-    },
-    { 
-      image: image3, 
-      description: "Sports Day Highlights - Athletic Excellence and Team Spirit" 
-    }
-  ];
+  const [carouselEvents, setCarouselEvents] = useState([]);
+  const [isLoadingCarousel, setIsLoadingCarousel] = useState(true);
   
   // GSAP refs
   const heroSectionRef = useRef(null);
@@ -42,6 +25,44 @@ const LandingPage = () => {
   const overlayRef = useRef(null);
   const dotsRef = useRef([]);
   const contentRef = useRef(null);
+
+  // Fetch carousel data from API
+  useEffect(() => {
+    const fetchCarouselData = async () => {
+      try {
+        setIsLoadingCarousel(true);
+        const carouselData = await carouselService.getCarouselItems();
+        setCarouselEvents(carouselData);
+      } catch (error) {
+        console.error('Error fetching carousel data:', error);
+        // Fallback to default carousel if API fails
+        setCarouselEvents([
+          { 
+            id: '1',
+            imageUrl: image1, 
+            description: "Annual Tech Conference 2025 - Embracing Innovation and Digital Transformation",
+            order: 1
+          },
+          { 
+            id: '2',
+            imageUrl: image2, 
+            description: "Cultural Night Celebration - Showcasing Diverse Talents and Traditions",
+            order: 2
+          },
+          { 
+            id: '3',
+            imageUrl: image3, 
+            description: "Sports Day Highlights - Athletic Excellence and Team Spirit",
+            order: 3
+          }
+        ]);
+      } finally {
+        setIsLoadingCarousel(false);
+      }
+    };
+
+    fetchCarouselData();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -223,7 +244,7 @@ const LandingPage = () => {
               >
                 <img
                   ref={el => imageRefs.current[index] = el}
-                  src={event.image}
+                  src={event.imageUrl || event.image}
                   alt={`Event ${index + 1}`}
                   className="absolute inset-0 w-full h-full object-cover"
                   style={{

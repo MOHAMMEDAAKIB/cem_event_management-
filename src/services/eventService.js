@@ -1,5 +1,18 @@
+import mongoose from 'mongoose';
 import Event from '../models/Event.js';
-import { uploadImage, uploadMultipleImages, deleteImage, deleteMultipleImages } from './imageService.js';
+import { uploadImage, uploadMultipleImages, deleteImage } from './imageServiceServer.js';
+
+// Helper function to handle multiple image deletions
+const deleteMultipleImages = async (publicIds) => {
+  try {
+    const deletePromises = publicIds.map(publicId => deleteImage(publicId));
+    await Promise.all(deletePromises);
+    return true;
+  } catch (error) {
+    console.error('Error deleting multiple images:', error);
+    throw new Error('Failed to delete some images');
+  }
+};
 
 /**
  * Create a new event
@@ -36,6 +49,15 @@ export const createEvent = async (eventData, imageFiles = []) => {
     } else if (eventData.images && Array.isArray(eventData.images)) {
       // Use provided images from eventData
       images = eventData.images;
+    }
+    
+    // Add a placeholder image if no images are provided at all
+    if (!images || images.length === 0) {
+      images = [{
+        url: 'https://via.placeholder.com/800x400/1B4D3E/FFFFFF?text=Event+Image',
+        publicId: `placeholder_${Date.now()}`,
+        caption: 'Event placeholder image'
+      }];
     }
 
     // Prepare event data

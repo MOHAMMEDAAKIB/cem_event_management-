@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, Search, Filter, Plus, RefreshCw, AlertTriangle } from 'lucide-react';
 import SearchBar from '../components/SearchBar';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -16,12 +16,59 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Ref to keep track of active tooltips
+  const activeTooltips = React.useRef([]);
 
   const categories = ['all', 'Cultural', 'Sports', 'Workshop', 'Seminar', 'Conference', 'Competition'];
 
   useEffect(() => {
     loadEvents();
+    
+    // Add global cleanup for page unload
+    const handleBeforeUnload = () => {
+      cleanupAllTooltips();
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Cleanup function to remove any remaining tooltips when component unmounts
+    return () => {
+      cleanupAllTooltips();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, []);
+
+  // Clean up tooltips when location changes (navigation)
+  useEffect(() => {
+    cleanupAllTooltips();
+  }, [location]);
+
+  // Periodic cleanup of orphaned tooltips
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      // Remove any tooltips that might have been orphaned
+      const orphanedTooltips = document.querySelectorAll('.fc-tooltip');
+      orphanedTooltips.forEach(tooltip => {
+        if (tooltip && tooltip.parentNode) {
+          tooltip.parentNode.removeChild(tooltip);
+        }
+      });
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(cleanupInterval);
+  }, []);
+
+  // Function to clean up all tooltips
+  const cleanupAllTooltips = () => {
+    activeTooltips.current.forEach(tooltip => {
+      if (tooltip && tooltip.parentNode) {
+        tooltip.parentNode.removeChild(tooltip);
+      }
+    });
+    activeTooltips.current = [];
+  };
 
   const loadEvents = async () => {
     try {
@@ -241,7 +288,11 @@ export default function CalendarPage() {
                       borderColor: getCategoryColor(event.category),
                       textColor: '#ffffff'
                     }))}
-                    eventClick={info => navigate(`/events/${info.event.id}`)}
+                    eventClick={info => {
+                      // Clean up any existing tooltips before navigation
+                      cleanupAllTooltips();
+                      navigate(`/events/${info.event.id}`);
+                    }}
                     height={600}
                     headerToolbar={{
                       left: 'prev,next today',
@@ -288,6 +339,9 @@ export default function CalendarPage() {
                       tooltip.style.pointerEvents = 'none';
                       document.body.appendChild(tooltip);
                       
+                      // Track this tooltip
+                      activeTooltips.current.push(tooltip);
+                      
                       const updateTooltipPosition = (e) => {
                         tooltip.style.left = (e.pageX + 10) + 'px';
                         tooltip.style.top = (e.pageY + 10) + 'px';
@@ -299,7 +353,15 @@ export default function CalendarPage() {
                     eventMouseLeave={(info) => {
                       info.el.style.transform = 'scale(1)';
                       if (info.el.tooltip) {
-                        document.body.removeChild(info.el.tooltip);
+                        // Remove from tracking array
+                        const index = activeTooltips.current.indexOf(info.el.tooltip);
+                        if (index > -1) {
+                          activeTooltips.current.splice(index, 1);
+                        }
+                        // Remove from DOM
+                        if (info.el.tooltip.parentNode) {
+                          document.body.removeChild(info.el.tooltip);
+                        }
                         info.el.tooltip = null;
                       }
                     }}

@@ -518,12 +518,23 @@ body {
 /* Tooltip styling */
 .fc-tooltip {
   z-index: 1000;
+  pointer-events: none;
 }
 
 .fc-tooltip .bg-gray-900 {
   background-color: #1f2937;
   border-radius: 8px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+/* Ensure tooltips are hidden on page transitions */
+body.transitioning .fc-tooltip {
+  display: none !important;
+}
+
+/* Clean up any orphaned tooltips */
+.fc-tooltip:not(:hover) {
+  pointer-events: none;
 }
 
 /* Event content styling */
