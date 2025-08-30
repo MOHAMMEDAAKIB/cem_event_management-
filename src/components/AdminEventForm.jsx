@@ -83,6 +83,8 @@ const AdminEventForm = ({
 
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
+    } else if (formData.description.length > 800) {
+      newErrors.description = 'Description must be 800 characters or less';
     }
 
     // Image is now optional - remove the requirement
@@ -521,25 +523,31 @@ const AdminEventForm = ({
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={5}
+                  maxLength={800}
                   className={`w-full px-4 py-3 rounded-xl border-2 transition-all focus:outline-none focus:ring-0 resize-none ${
                     errors.description 
                       ? 'border-red-300 focus:border-red-500' 
                       : 'border-gray-200 focus:border-college-primary'
                   }`}
-                  placeholder="Detailed description of the event"
+                  placeholder="Detailed description of the event (800 characters max)"
                 />
-                <AnimatePresence>
-                  {errors.description && (
-                    <motion.p
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="text-red-500 text-sm mt-1"
-                    >
-                      {errors.description}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
+                <div className="flex justify-between items-center mt-1">
+                  <AnimatePresence>
+                    {errors.description && (
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-red-500 text-sm"
+                      >
+                        {errors.description}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                  <span className="text-sm text-gray-500">
+                    {formData.description.length}/800
+                  </span>
+                </div>
               </div>
             </div>
 

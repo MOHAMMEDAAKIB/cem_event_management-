@@ -32,6 +32,7 @@ export default function EventForm({ event, onClose, onSave }) {
     if (!form.date) newErrors.date = 'Date is required';
     if (!form.location.trim()) newErrors.location = 'Location is required';
     if (!form.description.trim()) newErrors.description = 'Description is required';
+    else if (form.description.length > 800) newErrors.description = 'Description must be 800 characters or less';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -182,12 +183,17 @@ export default function EventForm({ event, onClose, onSave }) {
             name="description"
             value={form.description}
             onChange={handleChange}
-            placeholder="Enter event description"
+            placeholder="Enter event description (800 characters max)"
             className={`form-input form-textarea ${errors.description ? 'border-red-500' : ''}`}
             rows={4}
+            maxLength={800}
             required
           />
-          {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+          <div className="flex justify-between items-center mt-1">
+            {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+            <div className="flex-1"></div>
+            <span className="text-sm text-gray-500">{form.description.length}/800</span>
+          </div>
         </div>
 
         {/* Participants */}
