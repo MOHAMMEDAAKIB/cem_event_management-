@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Camera, User, Menu, X, Home } from 'lucide-react';
+import { Calendar, Camera, User, Menu, X, Home, List } from 'lucide-react';
 import collegeLogo from '../pages/assets/icon.jpg';
 
 export default function Navbar() {
@@ -11,6 +11,7 @@ export default function Navbar() {
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
+    { path: '/events', label: 'Events', icon: List },
     { path: '/calendar', label: 'Calendar', icon: Calendar },
     { path: '/gallery', label: 'Gallery', icon: Camera },
     { path: '/admin/login', label: 'Admin', icon: User },

@@ -480,10 +480,25 @@ body {
   border-radius: 6px !important;
   font-weight: 500 !important;
   font-size: 0.875rem !important;
+  padding: 2px 4px !important;
+  margin: 1px !important;
+  min-height: 22px !important;
+}
+
+.calendar-container .fc-event-title {
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+.calendar-container .fc-event-title small {
+  font-size: 0.75rem !important;
+  font-weight: 400 !important;
+  opacity: 0.9;
 }
 
 .calendar-container .fc-daygrid-event {
   margin: 2px !important;
+  border-radius: 4px !important;
 }
 
 .calendar-container .fc-col-header-cell {
@@ -494,4 +509,50 @@ body {
 
 .calendar-container .fc-day-today {
   background: rgba(30, 132, 73, 0.05) !important;
+}
+
+.calendar-container .fc-event:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Tooltip styling */
+.fc-tooltip {
+  z-index: 1000;
+}
+
+.fc-tooltip .bg-gray-900 {
+  background-color: #1f2937;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+/* Event content styling */
+.calendar-container .fc-event-main-frame {
+  padding: 2px 4px;
+}
+
+.calendar-container .fc-event-title-container {
+  overflow: hidden;
+}
+
+/* Responsive calendar */
+@media (max-width: 768px) {
+  .calendar-container .fc-event {
+    font-size: 0.75rem !important;
+    min-height: 18px !important;
+  }
+  
+  .calendar-container .fc-event-title small {
+    font-size: 0.6rem !important;
+  }
+  
+  .calendar-container .fc-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .calendar-container .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+  }
 }

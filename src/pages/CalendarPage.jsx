@@ -28,13 +28,16 @@ export default function CalendarPage() {
       setLoading(true);
       setError(null);
       const response = await getAllEvents();
-      const events = response.data?.events || response.data || [];
+      
+      // Handle array response directly
+      const events = Array.isArray(response) ? response : [];
       
       // Map events for FullCalendar
       const mapped = events.map(e => ({
         id: e._id || e.id,
         title: e.title,
         date: e.date,
+        start: e.date, // Ensure FullCalendar recognizes the date
         category: e.category,
         extendedProps: {
           time: e.time,
@@ -42,8 +45,13 @@ export default function CalendarPage() {
           category: e.category,
           description: e.description,
           shortDescription: e.shortDescription,
-          imageUrl: e.images?.[0]?.url || e.imageUrl
-        }
+          imageUrl: e.images?.[0]?.url || e.imageUrl,
+          venue: e.venue || (typeof e.location === 'string' ? e.location : e.location?.address)
+        },
+        // Add time to title if available
+        displayTitle: e.time ? `${e.time} - ${e.title}` : e.title,
+        // Ensure venue is available
+        venue: e.venue || (typeof e.location === 'object' && e.location?.address) || e.location || ''
       }));
       
       setAllEvents(mapped);
@@ -228,8 +236,10 @@ export default function CalendarPage() {
                     initialView="dayGridMonth"
                     events={filteredEvents.map(event => ({
                       ...event,
+                      title: event.displayTitle || event.title,
                       backgroundColor: getCategoryColor(event.category),
                       borderColor: getCategoryColor(event.category),
+                      textColor: '#ffffff'
                     }))}
                     eventClick={info => navigate(`/events/${info.event.id}`)}
                     height={600}
@@ -242,12 +252,56 @@ export default function CalendarPage() {
                     dayMaxEvents={3}
                     moreLinkText="more events"
                     eventClassNames="cursor-pointer"
+                    eventContent={(arg) => {
+                      return {
+                        html: `
+                          <div class="fc-event-main-frame">
+                            <div class="fc-event-title-container">
+                              <div class="fc-event-title fc-sticky">
+                                <strong>${arg.event.title}</strong>
+                                ${arg.event.extendedProps.time ? `<br><small>⏰ ${arg.event.extendedProps.time}</small>` : ''}
+                                ${arg.event.venue || arg.event.extendedProps.venue ? `<br><small>📍 ${arg.event.venue || arg.event.extendedProps.venue}</small>` : ''}
+                              </div>
+                            </div>
+                          </div>
+                        `
+                      };
+                    }}
                     eventMouseEnter={(info) => {
                       info.el.style.transform = 'scale(1.02)';
                       info.el.style.transition = 'transform 0.2s ease';
+                      
+                      // Add tooltip with more details
+                      const tooltip = document.createElement('div');
+                      tooltip.className = 'fc-tooltip';
+                      tooltip.innerHTML = `
+                        <div class="bg-gray-900 text-white p-3 rounded-lg shadow-lg max-w-sm">
+                          <h4 class="font-bold mb-2">${info.event.title}</h4>
+                          ${info.event.extendedProps.time ? `<p class="text-sm mb-1">⏰ ${info.event.extendedProps.time}</p>` : ''}
+                          ${info.event.venue || info.event.extendedProps.venue ? `<p class="text-sm mb-1">📍 ${info.event.venue || info.event.extendedProps.venue}</p>` : ''}
+                          ${info.event.extendedProps.shortDescription ? `<p class="text-sm text-gray-300">${info.event.extendedProps.shortDescription}</p>` : ''}
+                          <p class="text-xs text-gray-400 mt-2">Click to view details</p>
+                        </div>
+                      `;
+                      tooltip.style.position = 'absolute';
+                      tooltip.style.zIndex = '1000';
+                      tooltip.style.pointerEvents = 'none';
+                      document.body.appendChild(tooltip);
+                      
+                      const updateTooltipPosition = (e) => {
+                        tooltip.style.left = (e.pageX + 10) + 'px';
+                        tooltip.style.top = (e.pageY + 10) + 'px';
+                      };
+                      
+                      info.el.addEventListener('mousemove', updateTooltipPosition);
+                      info.el.tooltip = tooltip;
                     }}
                     eventMouseLeave={(info) => {
                       info.el.style.transform = 'scale(1)';
+                      if (info.el.tooltip) {
+                        document.body.removeChild(info.el.tooltip);
+                        info.el.tooltip = null;
+                      }
                     }}
                   />
                 </div>

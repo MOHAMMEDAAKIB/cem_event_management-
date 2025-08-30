@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, ArrowRight, Star, Users, Trophy, Camera, MapPin, Clock } from 'lucide-react';
 import { gsap } from 'gsap';
 import { getUpcomingEvents } from '../services/eventServiceClient';
@@ -11,6 +11,7 @@ import image2 from '../images/GA0192_01.jpg';
 import image3 from '../images/NEWY62.jpg';
 
 const LandingPage = () => {
+  const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
@@ -367,8 +368,14 @@ const LandingPage = () => {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
               {upcomingEvents.map((event, index) => (
                 <div 
-                  key={event._id} 
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  key={event._id || event.id} 
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer"
+                  onClick={() => {
+                    const eventId = event._id || event.id;
+                    if (eventId) {
+                      navigate(`/events/${eventId}`);
+                    }
+                  }}
                   onMouseEnter={(e) => {
                     gsap.to(e.target, {
                       y: -10,
@@ -450,7 +457,7 @@ const LandingPage = () => {
                     </div>
 
                     <Link
-                      to={`/events/${event._id}`}
+                      to={`/events/${event._id || event.id}`}
                       className="inline-flex items-center text-primary-green hover:text-primary-green-dark font-medium transition-colors duration-200"
                     >
                       Learn More

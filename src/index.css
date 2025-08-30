@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import FullCalendar styles */
+@import '@fullcalendar/core/main.css';
+@import '@fullcalendar/daygrid/main.css';
+
+/* Import additional styles */
+@import './styles/globals.css';
+
 /* Custom CSS Variables for our design system */
 :root {
   /* Primary Colors - Green Theme */
@@ -54,6 +61,7 @@
   .line-clamp-1 {
     display: -webkit-box;
     -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -61,13 +69,15 @@
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  
+
   .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

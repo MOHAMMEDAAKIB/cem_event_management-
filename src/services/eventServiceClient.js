@@ -61,8 +61,30 @@ export const createEvent = async (eventData, imageFiles = []) => {
 export const getAllEvents = async (params = {}) => {
   try {
     const response = await api.get('/events', { params });
-    // Return the events array from the nested structure
-    return response.data.success ? response.data.data.events : [];
+    
+    // Handle different response structures
+    if (response.data.success) {
+      // If data is nested (data.data.events)
+      if (response.data.data && response.data.data.events) {
+        return response.data.data.events;
+      }
+      // If data is direct (data.data as array)
+      if (Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+      // If events is direct property
+      if (response.data.events) {
+        return response.data.events;
+      }
+      return [];
+    }
+    
+    // Fallback for direct array responses
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    return [];
   } catch (error) {
     console.error('Error fetching events:', error);
     throw new Error('Failed to fetch events');
@@ -77,8 +99,23 @@ export const getAllEvents = async (params = {}) => {
 export const getUpcomingEvents = async (params = {}) => {
   try {
     const response = await api.get('/events/upcoming', { params });
-    // Return the events array directly
-    return response.data.success ? response.data.data : [];
+    
+    // Handle different response structures
+    if (response.data.success) {
+      if (Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+      if (response.data.data && response.data.data.events) {
+        return response.data.data.events;
+      }
+      return [];
+    }
+    
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    return [];
   } catch (error) {
     console.error('Error fetching upcoming events:', error);
     throw new Error('Failed to fetch upcoming events');
@@ -93,8 +130,23 @@ export const getUpcomingEvents = async (params = {}) => {
 export const getPastEvents = async (params = {}) => {
   try {
     const response = await api.get('/events/past', { params });
-    // Return the events array directly
-    return response.data.success ? response.data.data : [];
+    
+    // Handle different response structures
+    if (response.data.success) {
+      if (Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+      if (response.data.data && response.data.data.events) {
+        return response.data.data.events;
+      }
+      return [];
+    }
+    
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    return [];
   } catch (error) {
     console.error('Error fetching past events:', error);
     throw new Error('Failed to fetch past events');

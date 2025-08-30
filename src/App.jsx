@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CalendarPage from './pages/CalendarPage';
+import EventsPage from './pages/EventsPage';
 import EventDetailsPage from './pages/EventDetailsPage';
 import GalleryPage from './pages/GalleryPage';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -22,6 +23,7 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/events" element={<EventsPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/events/:id" element={<EventDetailsPage />} />
         <Route path="/gallery" element={<GalleryPage />} />

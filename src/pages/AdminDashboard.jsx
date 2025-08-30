@@ -61,10 +61,17 @@ export default function AdminDashboard() {
       console.log('Upcoming events loaded:', upcoming);
       console.log('Past events loaded:', past);
       
-      // Ensure we have arrays
-      setEvents(Array.isArray(allEvents) ? allEvents : []);
-      setUpcomingEvents(Array.isArray(upcoming) ? upcoming : []);
-      setPastEvents(Array.isArray(past) ? past : []);
+      // Ensure we have arrays and add ID fields
+      const processEvents = (events) => {
+        return Array.isArray(events) ? events.map(event => ({
+          ...event,
+          id: event._id || event.id
+        })) : [];
+      };
+      
+      setEvents(processEvents(allEvents));
+      setUpcomingEvents(processEvents(upcoming));
+      setPastEvents(processEvents(past));
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load events. Please try again.');
@@ -83,14 +90,21 @@ export default function AdminDashboard() {
       // Convert single image file to array for the API
       const imageFiles = imageFile ? [imageFile] : [];
       const newEvent = await createEvent(eventData, imageFiles);
-      setEvents(prev => [newEvent, ...prev]);
+      
+      // Ensure the event has proper ID field
+      const eventWithId = {
+        ...newEvent,
+        id: newEvent._id || newEvent.id
+      };
+      
+      setEvents(prev => [eventWithId, ...prev]);
       
       // Update other lists if needed
       const today = new Date().toISOString().split('T')[0];
-      if (newEvent.date >= today) {
-        setUpcomingEvents(prev => [...prev, newEvent].sort((a, b) => new Date(a.date) - new Date(b.date)));
+      if (eventWithId.date >= today) {
+        setUpcomingEvents(prev => [...prev, eventWithId].sort((a, b) => new Date(a.date) - new Date(b.date)));
       } else {
-        setPastEvents(prev => [newEvent, ...prev]);
+        setPastEvents(prev => [eventWithId, ...prev]);
       }
       
       setShowForm(false);

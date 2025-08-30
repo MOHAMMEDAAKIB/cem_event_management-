@@ -1,61 +1,49 @@
-import cloudinary from '../config/cloudinary.js';
+import api from '../utils/api.js';
 
 /**
- * Upload image to Cloudinary
+ * Upload image via API to server
  * @param {File} file - Image file to upload
  * @param {string} folder - Cloudinary folder name
  * @returns {Promise<Object>} - Upload result with URL and public_id
  */
 export const uploadImage = async (file, folder = 'events') => {
   try {
-    // Convert file to base64 if it's a File object
-    let fileData;
-    if (file instanceof File) {
-      fileData = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    } else {
-      fileData = file;
-    }
-
-    const uploadResult = await cloudinary.uploader.upload(fileData, {
-      folder: folder,
-      resource_type: 'auto',
-      quality: 'auto:good',
-      fetch_format: 'auto',
-      transformation: [
-        { width: 1200, height: 800, crop: 'fill', quality: 'auto:good' },
-        { flags: 'progressive' }
-      ]
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const response = await api.post('/upload/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
 
-    return {
-      url: uploadResult.secure_url,
-      publicId: uploadResult.public_id,
-      width: uploadResult.width,
-      height: uploadResult.height,
-      format: uploadResult.format
-    };
+    return response.data.success ? response.data.image : null;
   } catch (error) {
-    console.error('Error uploading image to Cloudinary:', error);
+    console.error('Error uploading image:', error);
     throw new Error('Failed to upload image');
   }
 };
 
 /**
- * Upload multiple images to Cloudinary
+ * Upload multiple images via API to server
  * @param {File[]} files - Array of image files
  * @param {string} folder - Cloudinary folder name
  * @returns {Promise<Object[]>} - Array of upload results
  */
 export const uploadMultipleImages = async (files, folder = 'events') => {
   try {
-    const uploadPromises = files.map(file => uploadImage(file, folder));
-    const results = await Promise.all(uploadPromises);
-    return results;
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('images', file);
+    });
+
+    const response = await api.post('/upload/images', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data.success ? response.data.images : [];
   } catch (error) {
     console.error('Error uploading multiple images:', error);
     throw new Error('Failed to upload images');
@@ -63,58 +51,46 @@ export const uploadMultipleImages = async (files, folder = 'events') => {
 };
 
 /**
- * Delete image from Cloudinary
+ * Delete image via API
  * @param {string} publicId - Cloudinary public_id of the image
- * @returns {Promise<Object>} - Deletion result
+ * @returns {Promise<boolean>} - Success status
  */
 export const deleteImage = async (publicId) => {
   try {
-    const result = await cloudinary.uploader.destroy(publicId);
-    return result;
+    const response = await api.delete(`/upload/images/${publicId}`);
+    return response.data.success || true;
   } catch (error) {
-    console.error('Error deleting image from Cloudinary:', error);
+    console.error('Error deleting image:', error);
     throw new Error('Failed to delete image');
   }
 };
 
 /**
- * Delete multiple images from Cloudinary
- * @param {string[]} publicIds - Array of Cloudinary public_ids
- * @returns {Promise<Object>} - Deletion result
- */
-export const deleteMultipleImages = async (publicIds) => {
-  try {
-    const result = await cloudinary.api.delete_resources(publicIds);
-    return result;
-  } catch (error) {
-    console.error('Error deleting multiple images:', error);
-    throw new Error('Failed to delete images');
-  }
-};
-
-/**
- * Generate optimized image URL with transformations
- * @param {string} publicId - Cloudinary public_id
+ * Generate optimized image URL with transformations (client-side utility)
+ * @param {string} originalUrl - Original image URL
  * @param {Object} options - Transformation options
  * @returns {string} - Optimized image URL
  */
-export const getOptimizedImageUrl = (publicId, options = {}) => {
+export const getOptimizedImageUrl = (originalUrl, options = {}) => {
   const {
     width = 800,
     height = 600,
     crop = 'fill',
-    quality = 'auto:good',
-    format = 'auto'
+    quality = 'auto:good'
   } = options;
 
-  return cloudinary.url(publicId, {
-    width,
-    height,
-    crop,
-    quality,
-    fetch_format: format,
-    flags: 'progressive'
-  });
+  // If it's already a Cloudinary URL, we can add transformations
+  if (originalUrl && originalUrl.includes('cloudinary.com')) {
+    // Extract the parts of the URL
+    const urlParts = originalUrl.split('/upload/');
+    if (urlParts.length === 2) {
+      const transformation = `w_${width},h_${height},c_${crop},q_${quality}`;
+      return `${urlParts[0]}/upload/${transformation}/${urlParts[1]}`;
+    }
+  }
+  
+  // Return original URL if not Cloudinary or transformation fails
+  return originalUrl;
 };
 
 /**
@@ -124,7 +100,7 @@ export const getOptimizedImageUrl = (publicId, options = {}) => {
  */
 export const getUploadWidgetConfig = (folder = 'events') => {
   return {
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
     uploadPreset: 'unsigned_upload', // You'll need to create this in Cloudinary
     folder: folder,
     multiple: true,
@@ -136,3 +112,7 @@ export const getUploadWidgetConfig = (folder = 'events') => {
     ]
   };
 };
+
+// For backward compatibility, keep the same function names
+export const uploadEventImage = uploadMultipleImages;
+export const deleteEventImage = deleteImage;

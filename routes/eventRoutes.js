@@ -42,6 +42,11 @@ router.get('/', async (req, res) => {
 router.get('/upcoming', async (req, res) => {
   try {
     const events = await getUpcomingEvents(req.query);
+    console.log('Upcoming events found:', events.length);
+    if (events.length > 0) {
+      console.log('First event ID:', events[0]._id);
+      console.log('First event ID type:', typeof events[0]._id);
+    }
     res.status(200).json({
       success: true,
       data: events
@@ -151,13 +156,23 @@ router.get('/statistics', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
+    console.log('Fetching event with ID:', req.params.id);
+    console.log('ID type:', typeof req.params.id);
+    console.log('ID length:', req.params.id?.length);
+    
     const event = await getEventById(req.params.id);
+    console.log('Event found:', event ? 'Yes' : 'No');
+    if (event) {
+      console.log('Event title:', event.title);
+    }
+    
     res.status(200).json({
       success: true,
       data: event
     });
   } catch (error) {
     console.error('Get event by ID error:', error);
+    console.error('Error message:', error.message);
     res.status(error.message === 'Event not found' ? 404 : 500).json({
       success: false,
       message: error.message

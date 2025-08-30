@@ -13,6 +13,11 @@ const eventSchema = new mongoose.Schema({
     trim: true,
     maxlength: [1000, 'Description cannot be more than 1000 characters']
   },
+  shortDescription: {
+    type: String,
+    trim: true,
+    maxlength: [150, 'Short description cannot be more than 150 characters']
+  },
   date: {
     type: Date,
     required: [true, 'Event date is required']
@@ -56,8 +61,8 @@ const eventSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Event category is required'],
-    enum: ['Academic', 'Cultural', 'Sports', 'Technical', 'Social', 'Other'],
-    default: 'Other'
+    enum: ['Cultural', 'Sports', 'Workshop', 'Seminar', 'Conference', 'Competition', 'Academic', 'Technical', 'Social', 'Other'],
+    default: 'Cultural'
   },
   organizer: {
     name: {

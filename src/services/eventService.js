@@ -9,28 +9,68 @@ import { uploadImage, uploadMultipleImages, deleteImage, deleteMultipleImages } 
  */
 export const createEvent = async (eventData, imageFiles = []) => {
   try {
+    console.log('Creating event with data:', eventData);
+    console.log('Image files provided:', imageFiles?.length || 0);
+    
     let images = [];
 
-    // Upload images if provided
+    // Handle images if provided
     if (imageFiles && imageFiles.length > 0) {
-      const uploadResults = await uploadMultipleImages(imageFiles, 'events');
-      images = uploadResults.map((result, index) => ({
-        url: result.url,
-        publicId: result.publicId,
-        caption: `Event image ${index + 1}`
-      }));
+      try {
+        // Check if images are already processed (from frontend upload)
+        if (Array.isArray(eventData.images) && eventData.images.length > 0) {
+          images = eventData.images;
+        } else {
+          // Upload new image files
+          const uploadResults = await uploadMultipleImages(imageFiles, 'events');
+          images = uploadResults.map((result, index) => ({
+            url: result.url,
+            publicId: result.publicId,
+            caption: `Event image ${index + 1}`
+          }));
+        }
+      } catch (imageError) {
+        console.warn('Image upload failed, proceeding without images:', imageError);
+        images = [];
+      }
+    } else if (eventData.images && Array.isArray(eventData.images)) {
+      // Use provided images from eventData
+      images = eventData.images;
     }
 
-    // Create event with images
-    const event = new Event({
+    // Prepare event data
+    const eventToCreate = {
       ...eventData,
+      images,
+      // Ensure date is properly formatted
+      date: new Date(eventData.date),
+      status: 'published'
+    };
+
+    // Remove images from eventData to avoid duplication
+    delete eventToCreate.images;
+
+    // Create event
+    const event = new Event({
+      ...eventToCreate,
       images
     });
 
+    console.log('Saving event to database...');
     const savedEvent = await event.save();
+    console.log('Event saved successfully:', savedEvent._id);
+    
     return savedEvent;
   } catch (error) {
     console.error('Error creating event:', error);
+    console.error('Error details:', error.message);
+    
+    // Provide more specific error messages
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      throw new Error(`Validation failed: ${validationErrors.join(', ')}`);
+    }
+    
     throw new Error(`Failed to create event: ${error.message}`);
   }
 };
@@ -89,12 +129,19 @@ export const getAllEvents = async (options = {}) => {
         .sort(sortOptions)
         .skip(skip)
         .limit(parseInt(limit))
-        .lean(),
+        .lean()
+        .exec(),
       Event.countDocuments(query)
     ]);
 
+    // Ensure _id is converted to string for JSON serialization
+    const eventsWithStringIds = events.map(event => ({
+      ...event,
+      _id: event._id.toString()
+    }));
+
     return {
-      events,
+      events: eventsWithStringIds,
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(total / limit),
@@ -189,16 +236,32 @@ export const getFeaturedEvents = async (limit = 5) => {
  */
 export const getEventById = async (eventId) => {
   try {
+    // Validate if the eventId is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(eventId)) {
+      throw new Error('Event not found');
+    }
+
     const event = await Event.findById(eventId).lean();
     
     if (!event) {
       throw new Error('Event not found');
     }
 
-    return event;
+    // Ensure _id is converted to string for JSON serialization
+    return {
+      ...event,
+      _id: event._id.toString()
+    };
   } catch (error) {
     console.error('Error fetching event:', error);
-    throw new Error('Failed to fetch event');
+    
+    // If it's already an "Event not found" error, preserve it
+    if (error.message === 'Event not found') {
+      throw error;
+    }
+    
+    // For other errors, throw a generic error
+    throw new Error('Event not found');
   }
 };
 

@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { uploadImage, uploadMultipleImages, deleteImage } from '../src/services/imageService.js';
+import { uploadImage, uploadMultipleImages, deleteImage, getImagesFromFolder } from '../src/services/imageServiceServer.js';
 
 const router = express.Router();
 
@@ -154,6 +154,117 @@ router.delete('/images/:publicId', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete image',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Get images from a specific event folder
+ * GET /api/upload/gallery/:eventName
+ */
+router.get('/gallery/:eventName', async (req, res) => {
+  try {
+    const { eventName } = req.params;
+    
+    if (!eventName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event name is required'
+      });
+    }
+
+    try {
+      // Use the imported function
+      const folderPath = `events/${eventName}`;
+      const images = await getImagesFromFolder(folderPath);
+
+      res.status(200).json({
+        success: true,
+        message: 'Images retrieved successfully',
+        eventName,
+        images
+      });
+    } catch (cloudinaryError) {
+      console.warn(`No images found for event: ${eventName}`, cloudinaryError);
+      
+      // Return empty array if no images found
+      res.status(200).json({
+        success: true,
+        message: 'No images found for this event',
+        eventName,
+        images: []
+      });
+    }
+  } catch (error) {
+    console.error('Gallery fetch error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch gallery images',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Get images for multiple events
+ * POST /api/upload/gallery/multiple
+ */
+router.post('/gallery/multiple', async (req, res) => {
+  try {
+    const { eventNames } = req.body;
+    
+    if (!eventNames || !Array.isArray(eventNames)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event names array is required'
+      });
+    }
+
+    try {
+      // Import the function dynamically to avoid client-side issues
+      const { getImagesFromFolder } = await import('../src/services/imageService.js');
+      const eventImages = {};
+      
+      await Promise.all(
+        eventNames.map(async (eventName) => {
+          try {
+            const folderPath = `events/${eventName}`;
+            const images = await getImagesFromFolder(folderPath);
+            eventImages[eventName] = images;
+          } catch (error) {
+            console.warn(`No images found for event: ${eventName}`);
+            eventImages[eventName] = [];
+          }
+        })
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Gallery images retrieved successfully',
+        eventImages
+      });
+    } catch (cloudinaryError) {
+      console.error('Cloudinary error:', cloudinaryError);
+      
+      // Return empty object if Cloudinary fails
+      const eventImages = {};
+      eventNames.forEach(eventName => {
+        eventImages[eventName] = [];
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Gallery images could not be retrieved from Cloudinary',
+        eventImages,
+        warning: 'Cloudinary service unavailable'
+      });
+    }
+  } catch (error) {
+    console.error('Gallery fetch error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch gallery images',
       error: error.message
     });
   }
