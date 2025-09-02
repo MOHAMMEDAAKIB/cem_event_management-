@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Event from '../src/models/Event.js';
+import Carousel from '../src/models/Carousel.js';
 
 dotenv.config();
 
@@ -13,6 +14,24 @@ const connectDB = async () => {
     process.exit(1);
   }
 };
+
+const sampleCarouselItems = [
+  {
+    description: "Annual Tech Conference 2025 - Embracing Innovation and Digital Transformation",
+    imageUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+    order: 1
+  },
+  {
+    description: "Cultural Night Celebration - Showcasing Diverse Talents and Traditions",
+    imageUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+    order: 2
+  },
+  {
+    description: "Sports Day Highlights - Athletic Excellence and Team Spirit",
+    imageUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+    order: 3
+  }
+];
 
 const sampleEvents = [
   {
@@ -145,13 +164,18 @@ const initializeDatabase = async () => {
   try {
     await connectDB();
     
-    // Clear existing events
+    // Clear existing data
     await Event.deleteMany({});
-    console.log('🗑️ Cleared existing events');
+    await Carousel.deleteMany({});
+    console.log('🗑️ Cleared existing data');
     
     // Insert sample events
     const createdEvents = await Event.insertMany(sampleEvents);
     console.log(`✅ Created ${createdEvents.length} sample events`);
+    
+    // Insert sample carousel items
+    const createdCarouselItems = await Carousel.insertMany(sampleCarouselItems);
+    console.log(`✅ Created ${createdCarouselItems.length} sample carousel items`);
     
     // Display summary
     console.log('\n📊 Database Summary:');
@@ -161,10 +185,12 @@ const initializeDatabase = async () => {
       status: 'published' 
     });
     const featuredEvents = await Event.countDocuments({ featured: true });
+    const totalCarouselItems = await Carousel.countDocuments();
     
     console.log(`   Total Events: ${totalEvents}`);
     console.log(`   Upcoming Events: ${upcomingEvents}`);
     console.log(`   Featured Events: ${featuredEvents}`);
+    console.log(`   Carousel Items: ${totalCarouselItems}`);
     
     console.log('\n🎉 Database initialization completed successfully!');
     

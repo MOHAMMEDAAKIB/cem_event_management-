@@ -4,7 +4,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, Search, Filter, Plus, RefreshCw, AlertTriangle } from 'lucide-react';
 import SearchBar from '../components/SearchBar';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -19,12 +19,17 @@ export default function CalendarPage() {
   const [error, setError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Ref to keep track of active tooltips
+  const activeTooltips = React.useRef([]);
 
   const categories = ['all', 'Cultural', 'Sports', 'Workshop', 'Seminar', 'Conference', 'Competition'];
 
   useEffect(() => {
     loadEvents();
     
+<<<<<<< HEAD
     // Add event listener for when events are updated
     const handleEventsUpdated = () => {
       console.log('Events updated, refreshing calendar...');
@@ -56,6 +61,53 @@ export default function CalendarPage() {
   }, []);
 
   const loadEvents = async (isRefresh = false) => {
+=======
+    // Add global cleanup for page unload
+    const handleBeforeUnload = () => {
+      cleanupAllTooltips();
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Cleanup function to remove any remaining tooltips when component unmounts
+    return () => {
+      cleanupAllTooltips();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+  // Clean up tooltips when location changes (navigation)
+  useEffect(() => {
+    cleanupAllTooltips();
+  }, [location]);
+
+  // Periodic cleanup of orphaned tooltips
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      // Remove any tooltips that might have been orphaned
+      const orphanedTooltips = document.querySelectorAll('.fc-tooltip');
+      orphanedTooltips.forEach(tooltip => {
+        if (tooltip && tooltip.parentNode) {
+          tooltip.parentNode.removeChild(tooltip);
+        }
+      });
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(cleanupInterval);
+  }, []);
+
+  // Function to clean up all tooltips
+  const cleanupAllTooltips = () => {
+    activeTooltips.current.forEach(tooltip => {
+      if (tooltip && tooltip.parentNode) {
+        tooltip.parentNode.removeChild(tooltip);
+      }
+    });
+    activeTooltips.current = [];
+  };
+
+  const loadEvents = async () => {
+>>>>>>> branch1
     try {
       if (isRefresh) {
         setIsRefreshing(true);
@@ -63,10 +115,39 @@ export default function CalendarPage() {
         setLoading(true);
       }
       setError(null);
+<<<<<<< HEAD
       console.log('Loading events for calendar...');
       
       const events = await getAllEvents();
       console.log('Events loaded:', events);
+=======
+      const response = await getAllEvents();
+      
+      // Handle array response directly
+      const events = Array.isArray(response) ? response : [];
+      
+      // Map events for FullCalendar
+      const mapped = events.map(e => ({
+        id: e._id || e.id,
+        title: e.title,
+        date: e.date,
+        start: e.date, // Ensure FullCalendar recognizes the date
+        category: e.category,
+        extendedProps: {
+          time: e.time,
+          location: typeof e.location === 'string' ? e.location : e.location?.address,
+          category: e.category,
+          description: e.description,
+          shortDescription: e.shortDescription,
+          imageUrl: e.images?.[0]?.url || e.imageUrl,
+          venue: e.venue || (typeof e.location === 'string' ? e.location : e.location?.address)
+        },
+        // Add time to title if available
+        displayTitle: e.time ? `${e.time} - ${e.title}` : e.title,
+        // Ensure venue is available
+        venue: e.venue || (typeof e.location === 'object' && e.location?.address) || e.location || ''
+      }));
+>>>>>>> branch1
       
       // Handle different response structures
       const eventsList = Array.isArray(events) ? events : 
@@ -261,8 +342,23 @@ export default function CalendarPage() {
                   <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                     initialView="dayGridMonth"
+<<<<<<< HEAD
                     events={filteredEvents}
                     eventClick={info => navigate(`/events/${info.event.extendedProps.originalId || info.event.id}`)}
+=======
+                    events={filteredEvents.map(event => ({
+                      ...event,
+                      title: event.displayTitle || event.title,
+                      backgroundColor: getCategoryColor(event.category),
+                      borderColor: getCategoryColor(event.category),
+                      textColor: '#ffffff'
+                    }))}
+                    eventClick={info => {
+                      // Clean up any existing tooltips before navigation
+                      cleanupAllTooltips();
+                      navigate(`/events/${info.event.id}`);
+                    }}
+>>>>>>> branch1
                     height={600}
                     headerToolbar={{
                       left: 'prev,next today',
@@ -273,6 +369,7 @@ export default function CalendarPage() {
                     dayMaxEvents={3}
                     moreLinkText="more events"
                     eventClassNames="cursor-pointer"
+<<<<<<< HEAD
                     displayEventTime={true}
                     eventTimeFormat={{
                       hour: 'numeric',
@@ -292,13 +389,69 @@ export default function CalendarPage() {
                       info.el.setAttribute('title', 
                         `${info.event.title}\n${timeText}\nLocation: ${info.event.extendedProps.location}`
                       );
+=======
+                    eventContent={(arg) => {
+                      return {
+                        html: `
+                          <div class="fc-event-main-frame">
+                            <div class="fc-event-title-container">
+                              <div class="fc-event-title fc-sticky">
+                                <strong>${arg.event.title}</strong>
+                                ${arg.event.extendedProps.time ? `<br><small>⏰ ${arg.event.extendedProps.time}</small>` : ''}
+                                ${arg.event.venue || arg.event.extendedProps.venue ? `<br><small>📍 ${arg.event.venue || arg.event.extendedProps.venue}</small>` : ''}
+                              </div>
+                            </div>
+                          </div>
+                        `
+                      };
+>>>>>>> branch1
                     }}
                     eventMouseEnter={(info) => {
                       info.el.style.transform = 'scale(1.02)';
                       info.el.style.transition = 'transform 0.2s ease';
+                      
+                      // Add tooltip with more details
+                      const tooltip = document.createElement('div');
+                      tooltip.className = 'fc-tooltip';
+                      tooltip.innerHTML = `
+                        <div class="bg-gray-900 text-white p-3 rounded-lg shadow-lg max-w-sm">
+                          <h4 class="font-bold mb-2">${info.event.title}</h4>
+                          ${info.event.extendedProps.time ? `<p class="text-sm mb-1">⏰ ${info.event.extendedProps.time}</p>` : ''}
+                          ${info.event.venue || info.event.extendedProps.venue ? `<p class="text-sm mb-1">📍 ${info.event.venue || info.event.extendedProps.venue}</p>` : ''}
+                          ${info.event.extendedProps.shortDescription ? `<p class="text-sm text-gray-300">${info.event.extendedProps.shortDescription}</p>` : ''}
+                          <p class="text-xs text-gray-400 mt-2">Click to view details</p>
+                        </div>
+                      `;
+                      tooltip.style.position = 'absolute';
+                      tooltip.style.zIndex = '1000';
+                      tooltip.style.pointerEvents = 'none';
+                      document.body.appendChild(tooltip);
+                      
+                      // Track this tooltip
+                      activeTooltips.current.push(tooltip);
+                      
+                      const updateTooltipPosition = (e) => {
+                        tooltip.style.left = (e.pageX + 10) + 'px';
+                        tooltip.style.top = (e.pageY + 10) + 'px';
+                      };
+                      
+                      info.el.addEventListener('mousemove', updateTooltipPosition);
+                      info.el.tooltip = tooltip;
                     }}
                     eventMouseLeave={(info) => {
                       info.el.style.transform = 'scale(1)';
+                      if (info.el.tooltip) {
+                        // Remove from tracking array
+                        const index = activeTooltips.current.indexOf(info.el.tooltip);
+                        if (index > -1) {
+                          activeTooltips.current.splice(index, 1);
+                        }
+                        // Remove from DOM
+                        if (info.el.tooltip.parentNode) {
+                          document.body.removeChild(info.el.tooltip);
+                        }
+                        info.el.tooltip = null;
+                      }
                     }}
                   />
                 </div>

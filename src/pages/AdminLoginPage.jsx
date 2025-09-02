@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, Shield, AlertCircle } from 'lucide-react';
-import { authService } from '../services/authService';
+import { validateAdminLogin, setAuthenticated } from '../utils/auth';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
@@ -17,15 +17,16 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      const result = await authService.login(username, password);
+      // Simulate loading time for better UX
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (result.success) {
+      if (validateAdminLogin(username, password)) {
+        setAuthenticated(true);
         navigate('/admin/dashboard');
       } else {
-        setError(result.message || 'Invalid username or password. Please try again.');
+        setError('Invalid username or password. Please try again.');
       }
     } catch (err) {
-      console.error('Login error:', err);
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -37,9 +38,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-green to-primary-green-light rounded-2xl flex items-center justify-center shadow-lg">
-            <Shield className="w-8 h-8 text-white" />
-          </div>
+          
           <h1 className="heading-2 text-primary mb-2">Admin Access</h1>
           <p className="text-muted">
             Sign in to manage events and dashboard
@@ -137,19 +136,10 @@ export default function AdminLoginPage() {
               <p className="text-sm text-gray-600 mb-2">
                 Use these credentials for testing:
               </p>
-              <div className="text-sm font-mono bg-white p-2 rounded border space-y-1">
-                <div><span className="text-gray-600">Super Admin:</span></div>
-                <div>Username: <span className="font-semibold">superadmin</span></div>
-                <div>Password: <span className="font-semibold">SuperAdmin123!</span></div>
-                <div className="border-t pt-1 mt-2">
-                  <span className="text-gray-600">Regular Admin:</span>
-                </div>
+              <div className="text-sm font-mono bg-white p-2 rounded border">
                 <div>Username: <span className="font-semibold">admin</span></div>
-                <div>Password: <span className="font-semibold">admin123</span></div>
+                <div>Password: <span className="font-semibold">admin@1234</span></div>
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                ⚠️ Change default passwords after first login
-              </p>
             </div>
           </div>
         </div>

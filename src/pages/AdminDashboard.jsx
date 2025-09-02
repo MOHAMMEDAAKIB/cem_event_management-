@@ -66,10 +66,17 @@ export default function AdminDashboard() {
       console.log('Upcoming events loaded:', upcoming);
       console.log('Past events loaded:', past);
       
-      // Ensure we have arrays
-      setEvents(Array.isArray(allEvents) ? allEvents : []);
-      setUpcomingEvents(Array.isArray(upcoming) ? upcoming : []);
-      setPastEvents(Array.isArray(past) ? past : []);
+      // Ensure we have arrays and add ID fields
+      const processEvents = (events) => {
+        return Array.isArray(events) ? events.map(event => ({
+          ...event,
+          id: event._id || event.id
+        })) : [];
+      };
+      
+      setEvents(processEvents(allEvents));
+      setUpcomingEvents(processEvents(upcoming));
+      setPastEvents(processEvents(past));
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load events. Please try again.');
@@ -82,22 +89,33 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleCreateEvent = async (eventData, imageFile) => {
+  const handleCreateEvent = async (eventData, imageFiles) => {
     try {
       setSubmitting(true);
-      // Convert single image file to array for the API
-      const imageFiles = imageFile ? [imageFile] : [];
+      console.log('Creating event with data:', eventData);
+      console.log('Image files:', imageFiles);
+      
       const newEvent = await createEvent(eventData, imageFiles);
       
+<<<<<<< HEAD
       // Update local state
       setEvents(prev => [newEvent, ...prev]);
+=======
+      // Ensure the event has proper ID field
+      const eventWithId = {
+        ...newEvent,
+        id: newEvent._id || newEvent.id
+      };
+      
+      setEvents(prev => [eventWithId, ...prev]);
+>>>>>>> branch1
       
       // Update other lists if needed
       const today = new Date().toISOString().split('T')[0];
-      if (newEvent.date >= today) {
-        setUpcomingEvents(prev => [...prev, newEvent].sort((a, b) => new Date(a.date) - new Date(b.date)));
+      if (eventWithId.date >= today) {
+        setUpcomingEvents(prev => [...prev, eventWithId].sort((a, b) => new Date(a.date) - new Date(b.date)));
       } else {
-        setPastEvents(prev => [newEvent, ...prev]);
+        setPastEvents(prev => [eventWithId, ...prev]);
       }
       
       setShowForm(false);
@@ -113,11 +131,18 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleUpdateEvent = async (eventData, imageFile) => {
+  const handleUpdateEvent = async (eventData, imageFiles) => {
     try {
       setSubmitting(true);
+<<<<<<< HEAD
       // Convert single image file to array for the API
       const imageFiles = imageFile ? [imageFile] : [];
+=======
+      console.log('Updating event with data:', eventData);
+      console.log('Image files:', imageFiles);
+      
+      const updatedEvent = await updateEvent(editing.id, eventData, imageFiles);
+>>>>>>> branch1
       
       // Use the correct ID format (_id or id)
       const eventId = editing._id || editing.id;
@@ -337,14 +362,15 @@ export default function AdminDashboard() {
                   <Plus className="w-5 h-5" />
                   Add New Event
                 </motion.button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium">
-                  <BarChart3 className="w-5 h-5" />
-                  View Analytics
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 bg-college-secondary text-gray-800 rounded-xl hover:bg-college-secondary/90 transition-colors font-medium">
-                  <Users className="w-5 h-5" />
-                  Manage Users
-                </button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate('/admin/carousel')}
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-college-secondary text-gray-800 rounded-xl hover:bg-college-secondary/90 transition-colors font-medium shadow-lg"
+                >
+                  <Eye className="w-5 h-5" />
+                  Manage Carousel
+                </motion.button>
               </div>
             </div>
           </motion.div>

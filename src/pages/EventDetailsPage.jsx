@@ -45,12 +45,19 @@ export default function EventDetailsPage() {
       setLoading(true);
       setError(null);
       console.log('Loading event with ID:', id);
+<<<<<<< HEAD
+=======
+      console.log('ID type:', typeof id);
+      console.log('ID length:', id?.length);
+      
+>>>>>>> branch1
       const eventData = await getEventById(id);
       console.log('Event data received:', eventData);
       setEvent(eventData);
     } catch (err) {
       console.error('Error loading event:', err);
-      setError('Event not found or failed to load.');
+      console.error('Error message:', err.message);
+      setError(err.message || 'Event not found or failed to load.');
     } finally {
       setLoading(false);
     }
@@ -137,6 +144,52 @@ export default function EventDetailsPage() {
     }
   };
 
+  const generateGoogleCalendarUrl = () => {
+    if (!event) return '';
+
+    const startDate = new Date(event.date);
+    // Set event time if available, otherwise default to 10:00 AM
+    if (event.time) {
+      const [time, period] = event.time.split(' ');
+      const [hours, minutes] = time.split(':');
+      let hour24 = parseInt(hours);
+      
+      if (period?.toLowerCase() === 'pm' && hour24 !== 12) {
+        hour24 += 12;
+      } else if (period?.toLowerCase() === 'am' && hour24 === 12) {
+        hour24 = 0;
+      }
+      
+      startDate.setHours(hour24, parseInt(minutes) || 0, 0, 0);
+    } else {
+      startDate.setHours(10, 0, 0, 0);
+    }
+
+    // End time: 2 hours after start time
+    const endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000));
+
+    // Format dates for Google Calendar
+    const formatDateForGoogle = (date) => {
+      return date.toISOString().replace(/[:-]/g, '').split('.')[0] + 'Z';
+    };
+
+    const title = encodeURIComponent(event.title);
+    const description = encodeURIComponent(event.description || event.shortDescription || '');
+    const location = encodeURIComponent(
+      typeof event.location === 'string' 
+        ? event.location 
+        : `${event.location.address || ''}, ${event.location.city || ''}, ${event.location.state || ''} ${event.location.zipCode || ''}`.trim()
+    );
+
+    // Google Calendar URL
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatDateForGoogle(startDate)}/${formatDateForGoogle(endDate)}&details=${description}&location=${location}`;
+  };
+
+  const handleAddToGoogleCalendar = () => {
+    const googleUrl = generateGoogleCalendarUrl();
+    window.open(googleUrl, '_blank');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-college-accent/20 via-white to-college-accent/10 flex items-center justify-center">
@@ -169,7 +222,7 @@ export default function EventDetailsPage() {
               Go Back
             </button>
             <button
-              onClick={() => navigate('/gallery')}
+              onClick={() => navigate('/events')}
               className="px-6 py-3 bg-college-primary text-white rounded-xl hover:bg-college-primary/90 transition-colors font-medium"
             >
               View All Events
@@ -590,10 +643,18 @@ export default function EventDetailsPage() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
+<<<<<<< HEAD
                       className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-2xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-semibold shadow-lg shadow-green-200"
                     >
                       <Calendar className="w-5 h-5" />
                       Add to Calendar
+=======
+                      onClick={handleAddToGoogleCalendar}
+                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-college-primary text-white rounded-xl hover:bg-college-primary/90 transition-colors font-medium shadow-lg"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Add to Google Calendar
+>>>>>>> branch1
                     </motion.button>
                   )}
                 </div>
@@ -621,11 +682,17 @@ export default function EventDetailsPage() {
                   View All Events
                 </motion.button>
                 
+<<<<<<< HEAD
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate('/calendar')}
                   className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 font-semibold shadow-lg"
+=======
+                <button
+                  onClick={() => navigate('/events')}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-college-secondary text-gray-800 rounded-xl hover:bg-college-secondary/90 transition-colors font-medium"
+>>>>>>> branch1
                 >
                   <Clock className="w-5 h-5" />
                   Event Calendar

@@ -4,7 +4,11 @@ import dotenv from 'dotenv';
 import connectDB from './src/config/database.js';
 import Event from './src/models/Event.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+<<<<<<< HEAD
 import adminRoutes from './routes/adminRoutes.js';
+=======
+import carouselRoutes, { initializeDefaultCarouselItems } from './routes/carouselRoutes.js';
+>>>>>>> branch1
 
 // Configure environment variables
 dotenv.config();
@@ -12,7 +16,27 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+<<<<<<< HEAD
 // Connect to MongoDB using the enhanced connection
+=======
+// Connect to MongoDB
+const connectDB = async () => {
+  try {
+    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cem_events';
+    await mongoose.connect(mongoURI);
+    console.log('✅ MongoDB Connected Successfully');
+    
+    // Initialize default carousel items after DB connection
+    await initializeDefaultCarouselItems();
+    
+  } catch (error) {
+    console.error('❌ MongoDB Connection Error:', error.message);
+    process.exit(1);
+  }
+};
+
+// Connect to database
+>>>>>>> branch1
 connectDB();
 
 // Middleware
@@ -48,8 +72,13 @@ app.get('/health', (req, res) => {
 // Upload routes
 app.use('/api/upload', uploadRoutes);
 
+<<<<<<< HEAD
 // Admin routes
 app.use('/api/admin', adminRoutes);
+=======
+// Carousel routes
+app.use('/api/carousel', carouselRoutes);
+>>>>>>> branch1
 
 // Get all events
 app.get('/api/events', async (req, res) => {
