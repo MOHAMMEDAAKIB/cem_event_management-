@@ -2,7 +2,7 @@
 // In a real application, this should be handled securely on the backend
 export const ADMIN_CREDENTIALS = {
   username: 'admin',
-  password: 'admin123'
+  password: 'admin@1234'
 };
 
 // Function to validate admin login

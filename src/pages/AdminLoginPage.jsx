@@ -38,9 +38,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-green to-primary-green-light rounded-2xl flex items-center justify-center shadow-lg">
-            <Shield className="w-8 h-8 text-white" />
-          </div>
+          
           <h1 className="heading-2 text-primary mb-2">Admin Access</h1>
           <p className="text-muted">
             Sign in to manage events and dashboard
@@ -130,21 +128,7 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Demo Credentials */}
-        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="flex items-start gap-3">
-            <div className="w-5 h-5 bg-secondary-yellow rounded-full flex-shrink-0 mt-0.5"></div>
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-1">Demo Credentials</h3>
-              <p className="text-sm text-gray-600 mb-2">
-                Use these credentials for testing:
-              </p>
-              <div className="text-sm font-mono bg-white p-2 rounded border">
-                <div>Username: <span className="font-semibold">admin</span></div>
-                <div>Password: <span className="font-semibold">admin123</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
+        
       </div>
     </div>
   );

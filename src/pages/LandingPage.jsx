@@ -201,17 +201,17 @@ const LandingPage = () => {
     {
       icon: Calendar,
       title: 'Event Calendar',
-      description: 'View and manage all upcoming events in one place'
+      description: 'View and manage all upcoming events in one place with intuitive calendar interface and smart filtering options'
     },
     {
       icon: Camera,
       title: 'Photo Gallery',
-      description: 'Browse through beautiful moments from past events'
+      description: 'Browse through beautiful moments from past events with high-quality image galleries and easy sharing capabilities'
     },
     {
       icon: Users,
       title: 'Easy Management',
-      description: 'Streamlined admin dashboard for event organization'
+      description: 'Streamlined admin dashboard for event organization with real-time analytics and comprehensive reporting tools'
     }
   ];
 
@@ -376,35 +376,7 @@ const LandingPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-12 px-4">
-            {stats.map((stat, index) => (
-              <div 
-                key={index} 
-                className="text-center p-4 sm:p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                onMouseEnter={(e) => {
-                  gsap.to(e.target, {
-                    y: -10,
-                    scale: 1.05,
-                    duration: 0.3,
-                    ease: "power2.out"
-                  });
-                }}
-                onMouseLeave={(e) => {
-                  gsap.to(e.target, {
-                    y: 0,
-                    scale: 1,
-                    duration: 0.3,
-                    ease: "power2.out"
-                  });
-                }}
-              >
-                <div className="text-2xl sm:text-3xl font-bold text-primary-green mb-2">
-                  {stat.number}
-                </div>
-                <div className="text-xs sm:text-sm text-muted font-medium">{stat.label}</div>
-              </div>
-            ))}
-          </div>
+
         </div>
       </section>
 
@@ -556,10 +528,10 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="section-padding-sm bg-gray-50">
+      <section className="py-8 bg-gray-50">
         <div className="container px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 px-4">
-            <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-6">
+          <div className="text-center mb-8 px-4">
+            <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">
               Why Choose Our Platform?
             </h2>
             <p className="text-lg text-muted max-w-2xl mx-auto">
@@ -568,11 +540,11 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 px-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 px-4">
             {features.map((feature, index) => (
               <div 
                 key={index} 
-                className="card text-center hover:transform hover:scale-105 transition-all duration-300 p-6 lg:p-8"
+                className="card text-center hover:transform hover:scale-105 transition-all duration-300 p-4 lg:p-5"
                 onMouseEnter={(e) => {
                   gsap.to(e.target, {
                     y: -15,
@@ -592,12 +564,12 @@ const LandingPage = () => {
                   });
                 }}
               >
-                <div className="card-body">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-green to-primary-green-light rounded-xl flex items-center justify-center transform transition-transform duration-300 hover:rotate-12">
-                    <feature.icon className="w-8 h-8 text-white" />
+                <div className="card-body pt-4">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-primary-green to-primary-green-light rounded-xl flex items-center justify-center transform transition-transform duration-300 hover:rotate-12">
+                    <feature.icon className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                  <p className="text-muted">{feature.description}</p>
+                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-muted text-base">{feature.description}</p>
                 </div>
               </div>
             ))}
